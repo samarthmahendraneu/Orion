@@ -50,7 +50,7 @@ namespace orion {
     private:
         // TODO:
         // - Task queue
-        std:: queue<Task> tasks;
+        std:: queue<Task> task_queue;
         // - Synchronization primitives (mutex, condition variable)
         std::mutex tasks_mutex;
         std::condition_variable cv;
