@@ -7,6 +7,7 @@
 #include <optional>
 #include "task.h"
 #include <iostream>
+#include <any>
 
 
 int main(){
@@ -26,7 +27,7 @@ int main(){
     worker.submit(task);
     auto result = worker.run();
     if (result) {
-        std::cout << "Result: " << *result << std::endl;
+        std::cout << "Result: " << std::any_cast<int>(*result) << std::endl;
 
 
 

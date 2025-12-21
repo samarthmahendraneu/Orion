@@ -34,6 +34,7 @@
 #include <condition_variable>
 #include <functional>
 #include <optional>
+#include <any>
 
 
 namespace orion {
@@ -46,7 +47,7 @@ namespace orion {
         // - Method to peek at the next available task without executing it.
         std::optional<Task> peek();
         // - Method to execute one task if available.
-        std::optional<int> run();
+        std::optional<std::any> run();
 
 
     private:

@@ -6,6 +6,7 @@
 
 #include <string>
 #include <functional>
+#include <any>
 
 
 
@@ -35,7 +36,7 @@ namespace orion {
     // - Store the task's ID
     struct Task {
         std::string id;
-        std::function<int()> work;
+        std::function<std::any()> work;
     };
 
 }
