@@ -32,6 +32,7 @@
 #include <optional>
 #include <queue>
 #include <mutex>
+#include <condition_variable>
 
 namespace orion {
 
@@ -52,7 +53,7 @@ namespace orion {
         std:: queue<Task> tasks;
         // - Synchronization primitives (mutex, condition variable)
         std::mutex tasks_mutex;
-        std::condition_variable condition_variable;
+        std::condition_variable cv;
     };
 
 }
