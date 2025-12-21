@@ -50,7 +50,7 @@ namespace orion {
         // - Method to peek at the next available task without executing it.
         std::optional<Task> peek();
         // - Method to execute one task if available.
-        std::optional<std::any> run();
+        void run();
 
 
     private:

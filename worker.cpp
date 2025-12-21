@@ -25,14 +25,18 @@
 // This file should contain ZERO scheduling logic.
 // It only executes what it's given.
 #include "worker.h"
+#include "object_store.h"
 #include <functional>
 #include <any>
 #include <optional>
 
 namespace orion {
+    Worker::Worker(ObjectStore& store)
+    : store_(store) {}
 
 
         void Worker::submit(Task task) {
+            ObjectRef ref{task.id};
             {
               // using lock guard for automatic mutex management instead of manual lock/unlock to avoid deadlocks
               std::lock_guard<std::mutex> lock(tasks_mutex);
@@ -43,8 +47,8 @@ namespace orion {
             cv.notify_one(); // Notify one waiting thread that a new task is available
         }
 
-        std::optional<std::any> Worker::run() {
-            Task task;
+        void Worker::run() {
+            std::pair<Task, ObjectRef> item;
             {
                 std::unique_lock<std::mutex> lock(tasks_mutex);
                 if (task_queue.empty()) {
@@ -57,7 +61,7 @@ namespace orion {
 
             // run the task
             std::any result = task.work();
-            return result;
+            store_.put(item.second.id, std::move(result));
         }
         std::optional<Task> Worker::peek() {
             std::lock_guard<std::mutex> lock(tasks_mutex);
