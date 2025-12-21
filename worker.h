@@ -40,7 +40,7 @@ namespace orion {
         // TODO:
         // - Method to submit a task to this worker.
         void submit(Task task);
-        // - Method to execute one task if available.
+        // - Method to peek at the next available task without executing it.
         std::optional<Task> peek();
         // - Method to execute one task if available.
         std::optional<int> run();
