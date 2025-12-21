@@ -5,7 +5,7 @@
 #endif //TASK_H
 
 #include <string>
-#include <stdio.h>
+#include <functional>
 
 
 
@@ -36,7 +36,7 @@ namespace orion {
     struct Task {
         std::string id;
         std::function<int()> work;
-    }
+    };
 
 }
 

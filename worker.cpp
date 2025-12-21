@@ -25,6 +25,7 @@
 // This file should contain ZERO scheduling logic.
 // It only executes what it's given.
 #include "worker.h"
+#include <functional>
 
 namespace orion {
 
@@ -40,19 +41,26 @@ namespace orion {
         }
 
         std::optional<int> Worker::run() {
-        Task task;
-        {
-             std::unique_lock<std::mutex> lock(tasks_mutex);
+            Task task;
+            {
+                std::unique_lock<std::mutex> lock(tasks_mutex);
+                if (task_queue.empty()) {
+                    return std::nullopt;
+                }
+                task = std::move(task_queue.front());
+                task_queue.pop();
+            }
+
+
+            // run the task
+            int result = task.work();
+            return result;
+        }
+        std::optional<Task> Worker::peek() {
+            std::lock_guard<std::mutex> lock(tasks_mutex);
             if (task_queue.empty()) {
                 return std::nullopt;
             }
-            task = std::move(task_queue.front());
-            task_queue.pop();
+            return task_queue.front();
         }
-
-
-        // run the task
-        int result = task.work();
-        return result;
-
 }

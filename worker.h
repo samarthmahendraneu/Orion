@@ -29,10 +29,12 @@
 // - A Worker should NOT know about other workers.
 // - Assume tasks are already assigned correctly.
 #include "task.h"
-#include <optional>
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <functional>
+#include <optional>
+
 
 namespace orion {
 
