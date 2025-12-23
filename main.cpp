@@ -32,13 +32,14 @@ int main(){
     scheduler.submit(t1);
     scheduler.submit(t2);
 
+    // Initial schedule to dispatch ready tasks
     scheduler.schedule();
-    worker.run();   // runs A
+
+    // Run tasks - notifications happen automatically via ObjectStore callback
+    worker.run();   // runs A → store.put() → scheduler notified → B becomes ready
+    worker.run();   // runs B
 
     std::cout << std::any_cast<int>(store.get_blocking("A")) << std::endl;
-    scheduler.on_object_created("A");
-    scheduler.schedule();
-    worker.run();   // runs B
     std::cout << std::any_cast<int>(store.get_blocking("B")) << std::endl;
 
     return 0;

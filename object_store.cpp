@@ -8,8 +8,22 @@
 namespace orion {
 
     void ObjectStore::put(const ObjectId& id, std::any value) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        store_[id] = std::move(value);
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            store_[id] = std::move(value);
+        }
+
+        // Notify waiting threads
+        cv_.notify_all();
+
+        // Trigger callback if registered (notify scheduler)
+        if (on_put_callback_) {
+            on_put_callback_(id);
+        }
+    }
+
+    void ObjectStore::set_on_put_callback(OnPutCallback callback) {
+        on_put_callback_ = std::move(callback);
     }
 
     std::optional<std::any> ObjectStore::get(const ObjectId& id) {

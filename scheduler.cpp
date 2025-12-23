@@ -6,7 +6,14 @@
 namespace orion {
 
     Scheduler::Scheduler(Worker& worker, ObjectStore& store)
-        : worker_(worker), store_(store) {}
+        : worker_(worker), store_(store) {
+        // Wire automatic notification: when ObjectStore.put() is called,
+        // automatically notify scheduler of new objects
+        store_.set_on_put_callback([this](const ObjectId& id) {
+            this->on_object_created(id);
+            this->schedule();
+        });
+    }
 
     void Scheduler::submit(Task task) {
         std::lock_guard<std::mutex> lock(mutex_);
