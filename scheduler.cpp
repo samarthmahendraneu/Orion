@@ -5,8 +5,8 @@
 
 namespace orion {
 
-    Scheduler::Scheduler(Worker& worker, ObjectStore& store)
-        : worker_(worker), store_(store) {
+    Scheduler::Scheduler(std::vector<Worker*> workers, ObjectStore& store)
+        : workers_(std::move(workers)), store_(store) {
         // Wire automatic notification: when ObjectStore.put() is called,
         // automatically notify scheduler of new objects
         store_.set_on_put_callback([this](const ObjectId& id) {
@@ -45,7 +45,9 @@ namespace orion {
         while (!ready_.empty()) {
             Task task = std::move(ready_.front());
             ready_.pop();
-            worker_.submit(std::move(task));
+            Worker* w = workers_[next_worker_];
+            next_worker_ = (next_worker_ + 1) % workers_.size();
+            w->submit(std::move(task));
         }
     }
 

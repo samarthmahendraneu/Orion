@@ -14,8 +14,9 @@
 
 int main(){
     orion::ObjectStore store;
-    orion::Worker worker(store);
-    orion::Scheduler scheduler(worker, store);
+    orion::Worker w1(store);
+    orion::Worker w2(store);
+    orion::Scheduler scheduler({&w1, &w2}, store);
 
     orion::Task t1{
         "A",
@@ -36,8 +37,8 @@ int main(){
     scheduler.schedule();
 
     // Run tasks - notifications happen automatically via ObjectStore callback
-    worker.run();   // runs A → store.put() → scheduler notified → B becomes ready
-    worker.run();   // runs B
+    w1.run();   // runs A → store.put() → scheduler notified → B becomes ready
+    w2.run();   // runs B
 
     std::cout << std::any_cast<int>(store.get_blocking("A")) << std::endl;
     std::cout << std::any_cast<int>(store.get_blocking("B")) << std::endl;

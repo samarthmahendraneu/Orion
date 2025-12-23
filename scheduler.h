@@ -13,7 +13,7 @@ namespace orion {
     // - Dispatches runnable tasks to a worker
     class Scheduler {
     public:
-        Scheduler(Worker& worker, ObjectStore& store);
+        Scheduler(std::vector<Worker*> workers, ObjectStore& store);
 
         // Submit a task to the system
         void submit(Task task);
@@ -27,7 +27,8 @@ namespace orion {
     private:
         bool deps_ready(const Task& task);
 
-        Worker& worker_;
+        std::vector<Worker*> workers_;
+        size_t next_worker_ = 0;
         ObjectStore& store_;
 
         std::vector<Task> pending_;
