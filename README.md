@@ -21,28 +21,58 @@ struct Task {
 
 ### Worker (`worker.h`, `worker.cpp`)
 
-An execution unit responsible for running tasks. Workers maintain a thread-safe queue and execute tasks on demand.
+An execution unit responsible for running tasks. Workers maintain a thread-safe queue and execute tasks on demand, storing results in an object store.
 
 **Key Features:**
 - Thread-safe task queue with mutex and condition variables
 - Non-blocking task submission
 - Synchronous task execution with `run()`
 - Task inspection with `peek()`
+- Integration with object store for result storage
 
 **API:**
-- `void submit(Task task)` - Enqueue a task for execution
-- `std::optional<int> run()` - Execute the next available task
+- `ObjectRef submit(Task task)` - Enqueue a task for execution, returns reference to future result
+- `void run()` - Execute the next available task and store result
 - `std::optional<Task> peek()` - View the next task without executing
+
+### Object Store (`object_store.h`, `object_store.cpp`)
+
+A thread-safe in-memory key-value store for storing task results and intermediate data.
+
+**Key Features:**
+- Thread-safe storage using mutex protection
+- Type-safe storage using `std::any`
+- Simple put/get interface
+
+**API:**
+- `void put(const ObjectId& id, std::any value)` - Store a value
+- `std::optional<std::any> get(const ObjectId& id)` - Retrieve a value
+
+### Object Reference (`object_ref.h`)
+
+A lightweight reference to objects stored in the object store.
+
+```cpp
+struct ObjectRef {
+    ObjectId id;  // Unique identifier for the stored object
+};
+```
 
 ## Usage
 
 ```cpp
 #include "worker.h"
 #include "task.h"
+#include "object_store.h"
 #include <iostream>
+#include <any>
 
 int main() {
-    orion::Worker worker;
+    // Create an object store
+    orion::ObjectStore store;
+
+    // Create a worker with the object store
+    orion::Worker worker(store);
 
     // Create a task
     orion::Task task{
@@ -52,12 +82,16 @@ int main() {
         }
     };
 
-    // Submit and execute
-    worker.submit(task);
-    auto result = worker.run();
+    // Submit task and get reference to future result
+    orion::ObjectRef resultRef = worker.submit(task);
 
+    // Execute the task
+    worker.run();
+
+    // Retrieve result from object store
+    auto result = store.get(resultRef.id);
     if (result) {
-        std::cout << "Result: " << *result << std::endl;
+        std::cout << "Result: " << std::any_cast<int>(*result) << std::endl;
     }
 }
 ```
@@ -67,14 +101,14 @@ int main() {
 This project uses C++17 or later. To build:
 
 ```bash
-g++ -std=c++17 main.cpp worker.cpp -o main -pthread
+g++ -std=c++17 main.cpp worker.cpp object_store.cpp -o main -pthread
 ./main
 ```
 
 Or with clang:
 
 ```bash
-clang++ -std=c++17 main.cpp worker.cpp -o main -pthread
+clang++ -std=c++17 main.cpp worker.cpp object_store.cpp -o main -pthread
 ./main
 ```
 

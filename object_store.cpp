@@ -21,4 +21,15 @@ namespace orion {
         return std::nullopt;
     }
 
+    std::any ObjectStore::get_blocking(const ObjectId& id) {
+        std::unique_lock<std::mutex> lock(mutex_);
+
+        // Wait until the object appears
+        cv_.wait(lock, [&] {
+            return store_.find(id) != store_.end();
+        });
+
+        return store_[id];
+    }
+
 }
