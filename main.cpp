@@ -15,22 +15,25 @@ int main(){
     orion::ObjectStore store;
     orion::Worker worker(store);
 
+    orion::Task task{
+        "task-1",
+        []() -> std::any {
+            return 21 * 2;
+        }
+    };
 
-    // simple task
-    orion::Task task("task1", [] {
-    return 42;          // int
-    });
-
+    // Submit task
     orion::ObjectRef ref = worker.submit(task);
 
-    // enqueue the task to the worker
+    // Execute task (in real systems, this would be another thread/process)
     worker.run();
-    auto result = store.get(ref.id);
-    if (result) {
-        std::cout << "Result: "
-                  << std::any_cast<int>(*result)
-                  << std::endl;
-    }
+
+    // BLOCK until result exists
+    std::any result = store.get_blocking(ref.id);
+
+    std::cout << "Result: "
+              << std::any_cast<int>(result)
+              << std::endl;
 
     return 0;
 
