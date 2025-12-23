@@ -36,7 +36,7 @@
 #include <functional>
 #include <optional>
 #include <any>
-
+#include <thread>
 
 namespace orion {
 
@@ -46,21 +46,25 @@ namespace orion {
         // we don't want implicit conversions cuz it can lead to unexpected behavior and bugs
         // ex : Worker w = someObjectStore; // implicit conversion, not desired now obj = Worker(someObjectStore); // explicit, clear
         explicit Worker(ObjectStore& store);
+        ~Worker();
         // - Method to submit a task to this worker.
         ObjectRef submit(Task task);
-        // - Method to peek at the next available task without executing it.
-        std::optional<Task> peek();
-        // - Method to execute one task if available.
-        void run();
+        // Lifecycle
+        void start();
+        void stop();
 
 
     private:
-        // TODO:
+        void run_loop();   // background thread loop
+        void run_one(std::pair<Task, ObjectRef> item);
         // - Task queue
         std::queue<std::pair<Task, ObjectRef>> task_queue;
         // - Synchronization primitives (mutex, condition variable)
         std::mutex tasks_mutex;
         std::condition_variable cv;
+
+        bool running_ = false;
+        std::thread worker_thread_;
         ObjectStore& store_;
     };
 

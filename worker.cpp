@@ -28,11 +28,18 @@
 #include "object_store.h"
 #include <functional>
 #include <any>
+#include <iostream>
 #include <optional>
+#include <thread>
 
 namespace orion {
     Worker::Worker(ObjectStore& store)
     : store_(store) {}
+
+
+    Worker::~Worker() {
+        stop();
+    }
 
 
         ObjectRef Worker::submit(Task task) {
@@ -47,20 +54,48 @@ namespace orion {
             cv.notify_one(); // Notify one waiting thread that a new task is available
             return ref;
         }
+    void Worker::start() {
+        running_ = true;
+        worker_thread_ = std::thread(&Worker::run_loop, this);
+        std::cout << "Starting worker thread..." << std::endl;
+    }
 
-    void Worker::run() {
-        // Dequeue a task
-        std::pair<Task, ObjectRef> item = [&] {
-            std::unique_lock<std::mutex> lock(tasks_mutex);
-            if (task_queue.empty()) {
-                throw std::runtime_error("run() called with empty queue");
+    void Worker::stop() {
+        {
+            std::lock_guard<std::mutex> lock(tasks_mutex);
+            running_ = false;
+        }
+        cv.notify_all();
+        if (worker_thread_.joinable()) {
+            worker_thread_.join();
+        }
+        std::cout << "Stopping worker thread." << std::endl;
+    }
+
+    void Worker::run_loop() {
+        while (true) {
+            std::optional<std::pair<Task, ObjectRef>> item;
+
+            {
+                std::unique_lock<std::mutex> lock(tasks_mutex);
+                cv.wait(lock, [&] {
+                    return !task_queue.empty() || !running_;
+                });
+
+                if (!running_ && task_queue.empty()) {
+                    return;
+                }
+
+                item = std::move(task_queue.front());
+                task_queue.pop();
             }
-            auto v = std::move(task_queue.front());
-            task_queue.pop();
-            return v;
-        }();
 
-        // Resolve dependency values (blocking is OK here)
+            run_one(std::move(*item));   // ✅ unwrap optional
+        }
+    }
+
+
+    void Worker::run_one(std::pair<Task, ObjectRef> item) {
         std::vector<std::any> args;
         args.reserve(item.first.deps.size());
 
@@ -68,18 +103,7 @@ namespace orion {
             args.push_back(store_.get_blocking(ref.id));
         }
 
-        // Execute task with resolved dependency values
         std::any result = item.first.work(std::move(args));
-
-        // Publish result to object store
         store_.put(item.second.id, std::move(result));
     }
-
-        std::optional<Task> Worker::peek() {
-            std::lock_guard<std::mutex> lock(tasks_mutex);
-            if (task_queue.empty()) {
-                return std::nullopt;
-            }
-            return task_queue.front().first;
-        }
 }
