@@ -36,6 +36,7 @@ GEN_OBJS := $(GEN_SRCS:.cc=.o)
 # Source groups
 # ─────────────────────────────────────────────
 CORE_SRCS := \
+	$(SRC)/core/context.cpp \
 	$(SRC)/core/worker.cpp \
 	$(SRC)/core/object_store.cpp \
 	$(SRC)/core/scheduler.cpp \
@@ -60,6 +61,17 @@ HEAD_OBJS := $(HEAD_SRCS:.cpp=.o)
 NODE_OBJS := $(NODE_SRCS:.cpp=.o)
 SUBMIT_OBJS := $(SUBMIT_SRCS:.cpp=.o)
 
+BUILD_ENGINE_SRCS :=
+
+BUILD_TEST_SRCS := build_test.cpp $(CORE_SRCS) $(BUILD_ENGINE_SRCS)
+BUILD_TEST_OBJS := $(BUILD_TEST_SRCS:.cpp=.o)
+
+BUILD_CLUSTER_TEST_SRCS := build_cluster_test.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC) $(BUILD_ENGINE_SRCS)
+BUILD_CLUSTER_TEST_OBJS := $(BUILD_CLUSTER_TEST_SRCS:.cpp=.o)
+
+BUILD_COMPLEX_TEST_SRCS := build_complex_test.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC) $(BUILD_ENGINE_SRCS)
+BUILD_COMPLEX_TEST_OBJS := $(BUILD_COMPLEX_TEST_SRCS:.cpp=.o)
+
 # ─────────────────────────────────────────────
 # Targets
 # ─────────────────────────────────────────────
@@ -74,6 +86,15 @@ node: $(NODE_OBJS) $(GEN_OBJS)
 
 submit_test: $(SUBMIT_OBJS) $(GEN_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o submit_test
+
+build_test: $(BUILD_TEST_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o build_test
+
+build_cluster_test: $(BUILD_CLUSTER_TEST_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o build_cluster_test
+
+build_complex_test: $(BUILD_COMPLEX_TEST_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o build_complex_test
 
 # ─────────────────────────────────────────────
 # Debug builds
@@ -125,8 +146,8 @@ node_asan:
 # Clean
 # ─────────────────────────────────────────────
 clean:
-	rm -f $(SRC)/**/*.o $(SRC)/**/*.d $(SRC)/*.o $(SRC)/*.d main head node submit_test 2>/dev/null || true
+	rm -f $(SRC)/**/*.o $(SRC)/**/*.d $(SRC)/*.o $(SRC)/*.d *.o *.d main head node submit_test build_test build_cluster_test build_complex_test hello_app hello_main.cpp hello_utils.cpp cluster_app cluster_main.cpp cluster_utils.cpp complex_app main_complex.cpp math_lib.cpp math_lib.h 2>/dev/null || true
 
-.PHONY: main head node submit_test clean \
+.PHONY: main head node submit_test build_test build_cluster_test build_complex_test clean \
 	main_debug head_debug node_debug \
 	main_asan head_asan node_asan

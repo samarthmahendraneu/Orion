@@ -25,75 +25,68 @@ orion::ObjectRef ClusterScheduler::submit(orion::Task task) {
 }
 
 void ClusterScheduler::schedule() {
-    // We'll do a simple pass:
-    // pop tasks, dispatch runnable ones, requeue non-runnable ones.
-    std::queue<orion::Task> next_pending;
+    std::vector<std::pair<std::string, orion::Task>> to_dispatch;
 
-    while (true) {
-        std::optional<orion::Task> task_opt;
-        {
-            std::lock_guard<std::mutex> lock(mu_);
-            if (pending_.empty()) break;
-
-            task_opt.emplace(std::move(pending_.front()));   // ✅ move-construct
-            pending_.pop();
-        }
-
-        orion::Task task = std::move(*task_opt);
-
-        if (!deps_ready_(task)) {
-            next_pending.push(std::move(task));
-            continue;
-        }
-
-        // pick a node
-        auto node_opt = registry_.pick_node();
-        if (!node_opt) {
-            // no nodes available → keep task pending
-            next_pending.push(std::move(task));
-            continue;
-        }
-
-        const auto& node = *node_opt;
-
-        // Dispatch
-        // In v0.2, we assume output object lives on the node we dispatch to.
-        // Later, the node will confirm via RPC callback/event.
-        // Save id before move — task.id is empty after std::move.
-        const std::string task_id = task.id;
-        client_.submit_task(node.node_id, std::move(task));
-
-        // Record expected output location optimistically
-        on_object_created(task_id, node.node_id);
-    }
-
-    // restore pending queue
     {
         std::lock_guard<std::mutex> lock(mu_);
-        while (!next_pending.empty()) {
-            pending_.push(std::move(next_pending.front()));
-            next_pending.pop();
+        int q_size = pending_.size();
+        for (int i = 0; i < q_size; i++) {
+            orion::Task task = std::move(pending_.front());
+            pending_.pop();
+
+            // Check dependencies inline to avoid re-locking
+            bool ready = true;
+            for (const auto& dep : task.deps) {
+                if (global_objects_.find(dep.id) == global_objects_.end()) {
+                    ready = false;
+                    break;
+                }
+            }
+
+            if (!ready) {
+                pending_.push(std::move(task));
+                continue;
+            }
+
+            // pick a node
+            auto node_opt = registry_.pick_node();
+            if (!node_opt) {
+                pending_.push(std::move(task)); // wait for node
+                continue;
+            }
+
+            to_dispatch.push_back({node_opt->node_id, std::move(task)});
         }
+    }
+
+    // Dispatch target tasks without holding the lock
+    for (auto& pair : to_dispatch) {
+        client_.submit_task(pair.first, std::move(pair.second));
     }
 }
 
-void ClusterScheduler::on_object_created(const std::string& object_id,
-                                        const std::string& node_id) {
-    std::lock_guard<std::mutex> lock(mu_);
-    object_locations_[object_id] = node_id;
+void ClusterScheduler::put_object(const std::string& object_id, std::any value) {
+    {
+        std::lock_guard<std::mutex> lock(mu_);
+        global_objects_[object_id] = std::move(value);
+    }
+    // Now that a dependency is available globally, try scheduling pending tasks again
+    schedule();
 }
 
-std::optional<std::string> ClusterScheduler::object_location(const std::string& object_id) {
+std::optional<std::any> ClusterScheduler::get_object(const std::string& object_id) {
     std::lock_guard<std::mutex> lock(mu_);
-    auto it = object_locations_.find(object_id);
-    if (it == object_locations_.end()) return std::nullopt;
-    return it->second;
+    auto it = global_objects_.find(object_id);
+    if (it != global_objects_.end()) {
+        return it->second;
+    }
+    return std::nullopt;
 }
 
 bool ClusterScheduler::deps_ready_(const orion::Task& task) const {
     std::lock_guard<std::mutex> lock(mu_);
     for (const auto& dep : task.deps) {
-        if (object_locations_.find(dep.id) == object_locations_.end()) {
+        if (global_objects_.find(dep.id) == global_objects_.end()) {
             return false;
         }
     }

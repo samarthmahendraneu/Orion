@@ -46,7 +46,7 @@ namespace orion::distributed {
                   << node_id_
                   << " on port " << port_ << "\n";
 
-        runtime_ = std::make_unique<orion::Runtime>(num_workers_);
+        runtime_ = std::make_unique<orion::Runtime>(num_workers_, node_id_);
 
         // 🔜 Later: start RPC server here
 

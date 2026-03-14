@@ -26,6 +26,7 @@
 // It only executes what it's given.
 #include "worker.h"
 #include "object_store.h"
+#include "context.h"
 #include <functional>
 #include <any>
 #include <iostream>
@@ -33,8 +34,8 @@
 #include <thread>
 
 namespace orion {
-    Worker::Worker(ObjectStore& store)
-    : store_(store) {}
+    Worker::Worker(ObjectStore& store, std::string node_id)
+    : store_(store), node_id_(std::move(node_id)) {}
 
 
     Worker::~Worker() {
@@ -77,6 +78,8 @@ namespace orion {
     }
 
     void Worker::run_loop() {
+        orion::set_current_node_id(node_id_);
+        
         while (true) {
             std::optional<std::pair<Task, ObjectRef>> item;
 
@@ -130,6 +133,6 @@ namespace orion {
 
         std::cout << "\n";
 
-        store_.put(item.second.id, std::move(result));
+        store_.put(item.second.id, std::move(result), node_id_);
     }
 }

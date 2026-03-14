@@ -22,7 +22,7 @@ namespace orion {
     class Runtime {
     public:
         // Create runtime with N worker threads
-        explicit Runtime(size_t num_workers);
+        explicit Runtime(size_t num_workers, std::string node_id = "local");
 
         // Submit a task to the system
         ObjectRef submit(Task task);
@@ -33,6 +33,9 @@ namespace orion {
         // Get result (blocking)
         std::any get(const ObjectRef& ref);
 
+        // Access internal store (useful for wiring test contexts)
+        ObjectStore& store() { return store_; }
+
         // Graceful shutdown
         void shutdown();
 
@@ -41,6 +44,7 @@ namespace orion {
 
         std::vector<std::unique_ptr<Worker>> workers_;
         std::unique_ptr<Scheduler> scheduler_;
+        std::string node_id_;
     };
 
 } // namespace orion

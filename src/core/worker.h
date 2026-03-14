@@ -45,7 +45,7 @@ namespace orion {
         // - Constructor with reference to ObjectStore explicit cuz of single-argument and avoid implicit conversions
         // we don't want implicit conversions cuz it can lead to unexpected behavior and bugs
         // ex : Worker w = someObjectStore; // implicit conversion, not desired now obj = Worker(someObjectStore); // explicit, clear
-        explicit Worker(ObjectStore& store);
+        explicit Worker(ObjectStore& store, std::string node_id = "local");
         ~Worker();
         // - Method to submit a task to this worker.
         ObjectRef submit(Task task);
@@ -66,6 +66,7 @@ namespace orion {
         bool running_ = false;
         std::thread worker_thread_;
         ObjectStore& store_;
+        std::string node_id_;
     };
 
 }

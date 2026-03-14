@@ -16,7 +16,7 @@
 #include "../rpc/node_client.h"
 
 #include "../../core/task.h"
-#include "../../core/object_ref.h"
+#include "../cluster/global_object_store.h"
 
 namespace orion::distributed {
 
@@ -24,7 +24,7 @@ namespace orion::distributed {
     // - chooses nodes
     // - dispatches tasks
     // - tracks object locations
-    class ClusterScheduler {
+    class ClusterScheduler : public GlobalObjectStore {
     public:
         ClusterScheduler(NodeRegistry& registry, NodeClient& client);
 
@@ -35,12 +35,11 @@ namespace orion::distributed {
         // Try to dispatch any runnable tasks.
         void schedule();
 
-        // Record that an object is available on some node.
-        // (In v0.2, we can "predict" outputs at dispatch time; later nodes will report.)
-        void on_object_created(const std::string& object_id, const std::string& node_id);
+        // From GlobalObjectStore interface
+        std::optional<std::any> get_object(const std::string& object_id) override;
 
-        // Where does this object live?
-        std::optional<std::string> object_location(const std::string& object_id);
+        // Called when an object is computed on a node
+        void put_object(const std::string& object_id, std::any value) override;
 
     private:
         bool deps_ready_(const orion::Task& task) const;
@@ -49,8 +48,8 @@ namespace orion::distributed {
         NodeRegistry& registry_;
         NodeClient& client_;
 
-        // object_id -> node_id
-        std::unordered_map<std::string, std::string> object_locations_;
+        // object_id -> std::any
+        std::unordered_map<std::string, std::any> global_objects_;
 
         // tasks waiting for deps
         std::queue<orion::Task> pending_;

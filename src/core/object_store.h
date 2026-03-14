@@ -12,6 +12,9 @@
 
 #include "object_ref.h"
 
+namespace orion::distributed {
+    class GlobalObjectStore;
+}
 
 namespace orion {
 
@@ -21,7 +24,7 @@ namespace orion {
     public:
         using OnPutCallback = std::function<void(const ObjectId&)>;
 
-        void put(const ObjectId& id, std::any value);
+        void put(const ObjectId& id, std::any value, const std::string& node_id = "");
         std::optional<std::any> get(const ObjectId& id);
         // Blocking get: waits until object exists
         std::any get_blocking(const ObjectId& id);
@@ -29,11 +32,17 @@ namespace orion {
         // Register callback to be invoked when objects are created
         void set_on_put_callback(OnPutCallback callback);
 
+        // Optional injection for Distributed Object Fetching
+        void set_global_context(orion::distributed::GlobalObjectStore* global_store);
+
     private:
         std::unordered_map<ObjectId, std::any> store_;
         std::mutex mutex_;
         std::condition_variable cv_;
         OnPutCallback on_put_callback_;
+
+        // For cross-node fetching
+        orion::distributed::GlobalObjectStore* global_store_ = nullptr;
     };
 
 
