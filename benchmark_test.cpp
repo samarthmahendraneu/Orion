@@ -65,7 +65,7 @@ int main() {
             {},
             [SLEEP_MS](const std::vector<std::any>&) -> std::any {
                 std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_MS));
-                return 0; // Success
+                return 1; // Return 1 unit of successfully completed work
             }
         };
         refs.push_back(cluster.submit(t));
@@ -75,8 +75,12 @@ int main() {
     orion::Task link_task{
         "link_all",
         refs,
-        [](const std::vector<std::any>&) -> std::any {
-            return 0;
+        [](const std::vector<std::any>& args) -> std::any {
+            int total = 0;
+            for (const auto& a : args) {
+                total += std::any_cast<int>(a);
+            }
+            return total;
         }
     };
     auto link_ref = cluster.submit(link_task);
@@ -90,9 +94,15 @@ int main() {
         // cluster scheduler object lookup isn't exposed yet for in-process client polling nicely.
         // Actually since we gave them a global_context, we can try getting from store.
         auto val = n1.local_runtime().store().get(link_ref.id);
-        if (val) break;
+        if (val) {
+            std::cout << "[Validation] Link task verified " << std::any_cast<int>(val.value()) << " out of " << NUM_TASKS << " tasks executed!\n";
+            break;
+        }
         val = n2.local_runtime().store().get(link_ref.id);
-        if (val) break;
+        if (val) {
+            std::cout << "[Validation] Link task verified " << std::any_cast<int>(val.value()) << " out of " << NUM_TASKS << " tasks executed!\n";
+            break;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
