@@ -72,6 +72,9 @@ BUILD_CLUSTER_TEST_OBJS := $(BUILD_CLUSTER_TEST_SRCS:.cpp=.o)
 BUILD_COMPLEX_TEST_SRCS := build_complex_test.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC) $(BUILD_ENGINE_SRCS)
 BUILD_COMPLEX_TEST_OBJS := $(BUILD_COMPLEX_TEST_SRCS:.cpp=.o)
 
+BENCHMARK_TEST_SRCS := benchmark_test.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC) $(BUILD_ENGINE_SRCS)
+BENCHMARK_TEST_OBJS := $(BENCHMARK_TEST_SRCS:.cpp=.o)
+
 # ─────────────────────────────────────────────
 # Targets
 # ─────────────────────────────────────────────
@@ -95,6 +98,9 @@ build_cluster_test: $(BUILD_CLUSTER_TEST_OBJS) $(GEN_OBJS)
 
 build_complex_test: $(BUILD_COMPLEX_TEST_OBJS) $(GEN_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o build_complex_test
+
+benchmark_test: $(BENCHMARK_TEST_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o benchmark_test
 
 # ─────────────────────────────────────────────
 # Debug builds
