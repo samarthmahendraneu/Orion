@@ -32,6 +32,15 @@ namespace orion::distributed {
                 return a * b;
             });
 
+        registry.register_function("compile",
+            [](std::vector<std::any> args) -> std::any {
+                if (args.empty()) return 0;
+                int i = std::any_cast<int>(args[0]);
+                std::string cmd = "clang++ -std=c++23 -O2 -c bench_src_" + std::to_string(i) + ".cpp -o dist_obj_" + std::to_string(i) + ".o";
+                int ret = std::system(cmd.c_str());
+                return (ret == 0) ? 1 : 0;
+            });
+
     }
 
 }

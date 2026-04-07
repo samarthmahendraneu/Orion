@@ -91,20 +91,7 @@ public:
     grpc::Status GetObjectLocation(grpc::ServerContext*,
                                    const orion::ObjectLocationRequest* req,
                                    orion::ObjectLocationReply* reply) override {
-        auto loc = scheduler_.object_location(req->object_id());
-        if (!loc) {
-            return grpc::Status(grpc::StatusCode::NOT_FOUND,
-                                "Object not found: " + req->object_id());
-        }
-        reply->set_node_id(*loc);
-        // address lookup from registry (best-effort)
-        for (const auto& n : registry_.nodes()) {
-            if (n.node_id == *loc) {
-                reply->set_address(n.address);
-                break;
-            }
-        }
-        return grpc::Status::OK;
+        return grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "Milestone 3");
     }
 
 private:

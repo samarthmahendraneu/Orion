@@ -55,11 +55,13 @@ MAIN_SRCS := $(SRC)/main.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC)
 HEAD_SRCS := $(SRC)/head_main.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC)
 NODE_SRCS := $(SRC)/node_main.cpp $(CORE_SRCS) $(NODE_RT_SRC) $(FUNC_SRCS)
 SUBMIT_SRCS := $(SRC)/submit_test.cpp
+SUBMIT_BENCHMARK_SRCS := $(SRC)/submit_benchmark.cpp
 
 MAIN_OBJS := $(MAIN_SRCS:.cpp=.o)
 HEAD_OBJS := $(HEAD_SRCS:.cpp=.o)
 NODE_OBJS := $(NODE_SRCS:.cpp=.o)
 SUBMIT_OBJS := $(SUBMIT_SRCS:.cpp=.o)
+SUBMIT_BENCHMARK_OBJS := $(SUBMIT_BENCHMARK_SRCS:.cpp=.o)
 
 BUILD_ENGINE_SRCS :=
 
@@ -89,6 +91,9 @@ node: $(NODE_OBJS) $(GEN_OBJS)
 
 submit_test: $(SUBMIT_OBJS) $(GEN_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o submit_test
+
+submit_benchmark: $(SUBMIT_BENCHMARK_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o submit_benchmark
 
 build_test: $(BUILD_TEST_OBJS) $(GEN_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o build_test
