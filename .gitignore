@@ -1,0 +1,28 @@
+# Build artifacts
+*.o
+*.d
+*.a
+*.dylib
+*.so
+
+# Executables (Mac/Linux)
+benchmark_test
+build_cluster_test
+build_complex_test
+complex_app
+head
+node
+submit_benchmark
+submit_test
+build_test
+
+# IDE / Editor folders
+.vscode/
+.idea/
+
+# macOS system files
+.DS_Store
+
+# Temporary files
+*.save
+*.log
