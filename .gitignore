@@ -38,4 +38,9 @@ seq_obj_main.o
 seq_obj_util_*
 dist_obj_main.o
 dist_obj_util_*
-
+# Orion Build Artifacts
+dist_build/
+seq_build/
+universal_builder
+test_project_benchmark
+questions.md
