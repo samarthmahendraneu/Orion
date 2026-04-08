@@ -69,16 +69,16 @@ UNIVERSAL_BUILDER_OBJS := $(UNIVERSAL_BUILDER_SRCS:.cpp=.o)
 
 BUILD_ENGINE_SRCS :=
 
-BUILD_TEST_SRCS := build_test.cpp $(CORE_SRCS) $(BUILD_ENGINE_SRCS)
+BUILD_TEST_SRCS := tests/build_test.cpp $(CORE_SRCS) $(BUILD_ENGINE_SRCS)
 BUILD_TEST_OBJS := $(BUILD_TEST_SRCS:.cpp=.o)
 
-BUILD_CLUSTER_TEST_SRCS := build_cluster_test.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC) $(BUILD_ENGINE_SRCS)
+BUILD_CLUSTER_TEST_SRCS := tests/build_cluster_test.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC) $(BUILD_ENGINE_SRCS)
 BUILD_CLUSTER_TEST_OBJS := $(BUILD_CLUSTER_TEST_SRCS:.cpp=.o)
 
-BUILD_COMPLEX_TEST_SRCS := build_complex_test.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC) $(BUILD_ENGINE_SRCS)
+BUILD_COMPLEX_TEST_SRCS := tests/build_complex_test.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC) $(BUILD_ENGINE_SRCS)
 BUILD_COMPLEX_TEST_OBJS := $(BUILD_COMPLEX_TEST_SRCS:.cpp=.o)
 
-BENCHMARK_TEST_SRCS := benchmark_test.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC) $(BUILD_ENGINE_SRCS)
+BENCHMARK_TEST_SRCS := tests/benchmark_test.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC) $(BUILD_ENGINE_SRCS)
 BENCHMARK_TEST_OBJS := $(BENCHMARK_TEST_SRCS:.cpp=.o)
 
 # ─────────────────────────────────────────────
@@ -167,7 +167,7 @@ node_asan:
 # Clean
 # ─────────────────────────────────────────────
 clean:
-	rm -f $(SRC)/**/*.o $(SRC)/**/*.d $(SRC)/*.o $(SRC)/*.d benchmarks/*.o benchmarks/*.d *.o *.d main head node submit_test submit_benchmark test_project_benchmark universal_builder build_test build_cluster_test build_complex_test 2>/dev/null || true
+	rm -f $(SRC)/**/*.o $(SRC)/**/*.d $(SRC)/*.o $(SRC)/*.d benchmarks/*.o benchmarks/*.d tests/*.o tests/*.d *.o *.d main head node submit_test submit_benchmark test_project_benchmark universal_builder build_test build_cluster_test build_complex_test 2>/dev/null || true
 
 .PHONY: main head node submit_test submit_benchmark test_project_benchmark build_test build_cluster_test build_complex_test clean \
 	main_debug head_debug node_debug \

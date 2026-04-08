@@ -1,23 +1,30 @@
-# Challenges: Moving to a Distributed Architecture
+# Technical Challenges: Orchestrating Orion at Scale
 
-Building a "distributed" system like Orion is much harder than building a regular app that runs on one computer. Here are the biggest problems I ran into and how I solved them.
+Transitioning the Orion build system from a local prototype to a distributed task-execution engine introduced several systems-level challenges. Below is a breakdown of the critical hurdles faced, covering memory safety, distributed state, and architectural trade-offs.
 
-### 1. The "Wait, Who Has the File?" Problem
-**Challenge**: On one computer, if Part A builds a file, Part B can see it immediately on the hard drive. In a cluster, Part A might be on Node 1 and Part B on Node 4. Node 4 has no idea the file exists.
-**Tackle**: I built a **Global Task Tracker** on the "Head" node. Now, every node "calls home" after a task finishes. The Head node keeps a master list of everything that’s ready and only tells other nodes to start when their dependencies are officially finished.
+---
 
-### 2. The Local Deadlock (The trickiest bug)
-**Challenge**: I found that nodes were getting stuck forever. Why? Because I had two "Schedulers" fighting each other. The Master Scheduler would say "Go!" but the Local Scheduler on the node would say "Wait, I don't see the file locally yet" and block the task.
-**Tackle**: I changed the logic so that if a task comes from the Master Head, the local node ignores its own dependency checks. We trust the "Head" node’s global view. This instantly fixed the "hanging" builds.
+### 1. The Distributed State Deadlock
+**The Challenge**: On a single machine, the scheduler and worker share a filesystem. In a distributed environment, we initially hit a "hanging" bug where worker nodes refused to start tasks because they couldn't see prerequisite files locally. However, the Head node *knew* the build was complete globally.
 
-### 3. Talking via the Network (gRPC)
-**Challenge**: Computers in a cluster need to talk to each other. I used **gRPC**, but at first, it was very slow because I was opening a new "phone call" (connection) for every single tiny update. This exhausted the computer's resources.
-**Tackle**: I optimized this by making the nodes keep the "phone line" open (cached connections). Now reporting a finished task is almost instant.
+**The Solution**: We moved to a **"Head-as-Truth" model**. When the ClusterHead dispatches a task, it implies a "Readiness Guarantee." We updated the node logic to bypass local filesystem checks for Head-dispatched tasks, resolving the discrepancy between local and global state.
 
-### 4. Making it "Universal"
-**Challenge**: At first, I had to write new C++ code inside the Orion framework every time I wanted to compile a different project. This isn't how a real build system works.
-**Tackle**: I added a "Universal Shell" function. Now, Orion can run ANY command (like `clang++`, `make`, or `cmake`) just by receiving a string. This made the system work for any project without ever touching the core code again.
+### 2. ABI Inconsistency & Stale Objects (The Malloc Error)
+**The Challenge**: During Milestone 2, we added a new `std::vector<std::string> args` field to our core `Task` struct. Because our Makefile lacked header-dependency tracking, only some `.cpp` files were recompiled. This led to an **ABI mismatch**: different parts of the system were interpreting the same memory addresses with different object layouts, resulting in a "malloc: pointer being freed was not allocated" crash.
 
-### 5. Speed vs. Noise
-**Challenge**: Sometimes the distributed build was actually *slower* than my laptop.
-**Tackle**: I learned that if the tasks are too small (like compiling a 5-line file), the time it takes to send the message over the network is longer than the work itself. I solved this by grouping work into bigger chunks so the "Work" outweighed the "Talk."
+**The Solution**: We implemented automatic dependency tracking in the Makefile using `-MMD -MP` flags. This ensures that any change to a `.h` file triggers a recompilation of all dependent units, preventing stack corruption and memory errors.
+
+### 3. Use-After-Move ID Loss
+**The Challenge**: We found a bug where tasks were successfully dispatched but their completion was never tracked. The root cause was a subtle C++ use-after-move: we were `std::move`ing a Task into a gRPC request and then attempting to read the `task.id` *after* the move to record it in our tracker.
+
+**The Solution**: We refactored the dispatch pipeline to capture the Task ID *before* the destructive move, ensuring the "Call Home" mechanism had a valid ID to report back to the Master.
+
+### 4. Data Locality vs. Object Transfer
+**The Challenge**: Early benchmarks showed that all work was being "pulled" to a single node. This was due to our **Strict Data Locality** policy: the scheduler always chose the node that already had the dependency data in memory to avoid networking overhead.
+
+**The Solution**: We analyzed the trade-off between **Local Execution** (fast, but causes load imbalance) and **Distributed Fetching** (slower due to gRPC transfer, but allows horizontal scaling). This led to the architectural decision to favor locality for small tasks while potentially implementing a peer-to-peer `GetObject` RPC for heavy tasks in the future.
+
+### 5. Transitioning to a Universal Build Engine
+**The Challenge**: Hardcoding C++ functions (like `add` or `mul`) into the Orion framework limited its utility for real-world projects.
+
+**The Solution**: We developed a **Universal Shell Builtin**. By registering a generic `shell_execute` function that workers can invoke with arbitrary command strings (like `clang++` or `cmake`), we decoupled the Orion *Runtime* from the *Project Logic*. This allows Orion to build any project without ever requiring a re-compilation of the core framework.

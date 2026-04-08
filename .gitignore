@@ -44,3 +44,7 @@ seq_build/
 universal_builder
 test_project_benchmark
 questions.md
+conversations/
+input/
+*.o
+build/
