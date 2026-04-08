@@ -41,33 +41,34 @@ public:
                                 "Unknown function: " + req->function_name());
         }
 
-        // ── Deserialize literal args from proto (bytes → std::any int) ─────────
-        // TaskRequest.args carries literal int values serialized as 4-byte LE.
-        // These are injected directly into the closure so the work function
-        // receives real values even when the object store has no dep objects.
+        // ── Deserialize literal args from proto (bytes → int or string) ─────────
         std::vector<std::any> literal_args;
         for (const auto& bytes : req->args()) {
-            if (bytes.size() >= 4) {
+            if (req->function_name() == "shell_execute") {
+                // For shell_execute, the first argument is always the full command string
+                literal_args.push_back(bytes);
+            } else if (bytes.size() >= 4) {
                 int val = 0;
                 std::memcpy(&val, bytes.data(), 4);
                 literal_args.push_back(val);
             }
         }
 
-        // Build an orion::Task that the local Runtime can execute
+        // Build an orion::Task that the local Runtime can execute.
+        // NOTE: We do NOT populate task.deps here. The ClusterHead has already
+        // verified that all dependencies are satisfied globally before dispatching.
+        // Re-adding them here would cause a deadlock in the local Scheduler since
+        // the dependent objects may reside on other nodes.
         orion::Task task;
         task.id            = req->task_id();
         task.function_name = req->function_name();
-
-        for (const auto& dep_id : req->dep_ids()) {
-            task.deps.push_back(orion::ObjectRef{dep_id});
-        }
 
         // Capture function name and literal args by value.
         // If literal_args is non-empty they are passed directly to the function;
         // otherwise the object-store resolver supplies the dep values (normal path).
         const std::string fn_name = req->function_name();
-        task.work = [this, fn_name, literal_args](std::vector<std::any> dep_vals) -> std::any {
+        const std::string task_id = req->task_id();
+        task.work = [this, fn_name, task_id, literal_args](std::vector<std::any> dep_vals) -> std::any {
             // Prefer literal args (sent over the wire) over dep values from store.
             const std::vector<std::any>& effective_args =
                 literal_args.empty() ? dep_vals : literal_args;
@@ -75,6 +76,9 @@ public:
             std::any result = fn_reg_.invoke(fn_name, effective_args);
             std::cout << "[Node:" << node_.node_id()
                       << "] Task complete  fn=" << fn_name << "\n" << std::flush;
+
+            // Milestone 3: Notify the head that the object is ready
+            node_.report_object_created(task_id);
             return result;
         };
 

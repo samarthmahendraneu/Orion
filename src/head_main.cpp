@@ -83,9 +83,12 @@ public:
                                      const orion::ObjectReport* req,
                                      orion::Empty*) override {
         std::cout << "[Head] ReportObjectCreated  object=" << req->object_id()
-                  << "  node=" << req->node_id() << "  (TODO)\n" << std::flush;
-        // Milestone 3: call scheduler_.on_object_created(req->object_id(), req->node_id())
-        return grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "Milestone 3");
+                  << "  node=" << req->node_id() << "\n" << std::flush;
+
+        // Milestone 3: Notify the scheduler that the dependency is now ready.
+        // We pass an empty value for the benchmark as the file exists on disk.
+        scheduler_.put_object(req->object_id(), std::nullopt);
+        return grpc::Status::OK;
     }
 
     grpc::Status GetObjectLocation(grpc::ServerContext*,

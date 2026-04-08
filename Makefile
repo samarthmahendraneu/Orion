@@ -54,14 +54,18 @@ NODE_RT_SRC := $(SRC)/distributed/node_runtime.cpp
 MAIN_SRCS := $(SRC)/main.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC)
 HEAD_SRCS := $(SRC)/head_main.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC)
 NODE_SRCS := $(SRC)/node_main.cpp $(CORE_SRCS) $(NODE_RT_SRC) $(FUNC_SRCS)
-SUBMIT_SRCS := $(SRC)/submit_test.cpp
-SUBMIT_BENCHMARK_SRCS := $(SRC)/submit_benchmark.cpp
+SUBMIT_SRCS := benchmarks/simple_task_test.cpp
+SUBMIT_BENCHMARK_SRCS := benchmarks/compiler_wide_dag.cpp
+TEST_PROJECT_BENCHMARK_SRCS := benchmarks/test_project_dag.cpp
+UNIVERSAL_BUILDER_SRCS := benchmarks/universal_cmake_orchestrator.cpp
 
 MAIN_OBJS := $(MAIN_SRCS:.cpp=.o)
 HEAD_OBJS := $(HEAD_SRCS:.cpp=.o)
 NODE_OBJS := $(NODE_SRCS:.cpp=.o)
 SUBMIT_OBJS := $(SUBMIT_SRCS:.cpp=.o)
 SUBMIT_BENCHMARK_OBJS := $(SUBMIT_BENCHMARK_SRCS:.cpp=.o)
+TEST_PROJECT_BENCHMARK_OBJS := $(TEST_PROJECT_BENCHMARK_SRCS:.cpp=.o)
+UNIVERSAL_BUILDER_OBJS := $(UNIVERSAL_BUILDER_SRCS:.cpp=.o)
 
 BUILD_ENGINE_SRCS :=
 
@@ -106,6 +110,12 @@ build_complex_test: $(BUILD_COMPLEX_TEST_OBJS) $(GEN_OBJS)
 
 benchmark_test: $(BENCHMARK_TEST_OBJS) $(GEN_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o benchmark_test
+
+test_project_benchmark: $(TEST_PROJECT_BENCHMARK_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o test_project_benchmark
+
+universal_builder: $(UNIVERSAL_BUILDER_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o universal_builder
 
 # ─────────────────────────────────────────────
 # Debug builds
@@ -157,8 +167,8 @@ node_asan:
 # Clean
 # ─────────────────────────────────────────────
 clean:
-	rm -f $(SRC)/**/*.o $(SRC)/**/*.d $(SRC)/*.o $(SRC)/*.d *.o *.d main head node submit_test build_test build_cluster_test build_complex_test hello_app hello_main.cpp hello_utils.cpp cluster_app cluster_main.cpp cluster_utils.cpp complex_app main_complex.cpp math_lib.cpp math_lib.h 2>/dev/null || true
+	rm -f $(SRC)/**/*.o $(SRC)/**/*.d $(SRC)/*.o $(SRC)/*.d benchmarks/*.o benchmarks/*.d *.o *.d main head node submit_test submit_benchmark test_project_benchmark universal_builder build_test build_cluster_test build_complex_test 2>/dev/null || true
 
-.PHONY: main head node submit_test build_test build_cluster_test build_complex_test clean \
+.PHONY: main head node submit_test submit_benchmark test_project_benchmark build_test build_cluster_test build_complex_test clean \
 	main_debug head_debug node_debug \
 	main_asan head_asan node_asan

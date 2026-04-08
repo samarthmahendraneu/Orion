@@ -48,7 +48,12 @@ namespace orion::distributed {
 
         runtime_ = std::make_unique<orion::Runtime>(num_workers_, node_id_);
 
-        // 🔜 Later: start RPC server here
+        // Initialize gRPC stub for head communication
+        if (!cluster_address_.empty()) {
+            auto channel = grpc::CreateChannel(cluster_address_,
+                                               grpc::InsecureChannelCredentials());
+            head_stub_ = orion::ClusterHead::NewStub(channel);
+        }
 
         register_with_cluster();   // 👈 NEW
 
@@ -66,9 +71,6 @@ namespace orion::distributed {
             runtime_.reset();
         }
 
-        // Later:
-        // stop RPC server here
-
         running_ = false;
     }
 
@@ -77,22 +79,17 @@ namespace orion::distributed {
     }
 
     // Real gRPC registration with the head server.
-    // If cluster_address is empty (in-process mode), skip.
     void NodeRuntime::register_with_cluster() const {
+        if (!head_stub_) {
+            std::cout << "[NodeRuntime] No head stub — skipping gRPC registration\n";
+            return;
+        }
+
         std::cout << "[NodeRuntime] Registering "
                   << node_id_
                   << " with cluster at "
                   << cluster_address_
                   << "\n" << std::flush;
-
-        if (cluster_address_.empty()) {
-            std::cout << "[NodeRuntime] No cluster address set — skipping gRPC registration\n";
-            return;
-        }
-
-        auto channel = grpc::CreateChannel(cluster_address_,
-                                           grpc::InsecureChannelCredentials());
-        auto stub    = orion::ClusterHead::NewStub(channel);
 
         orion::RegisterNodeRequest req;
         req.set_node_id(node_id_);
@@ -101,7 +98,7 @@ namespace orion::distributed {
         orion::RegisterNodeReply reply;
         grpc::ClientContext ctx;
 
-        grpc::Status status = stub->RegisterNode(&ctx, req, &reply);
+        grpc::Status status = head_stub_->RegisterNode(&ctx, req, &reply);
 
         if (status.ok() && reply.success()) {
             std::cout << "[NodeRuntime] Registration successful (node=" << node_id_ << ")\n" << std::flush;
@@ -109,6 +106,18 @@ namespace orion::distributed {
             std::cerr << "[NodeRuntime] Registration FAILED: "
                       << status.error_message() << "\n" << std::flush;
         }
+    }
+
+    void NodeRuntime::report_object_created(const std::string& object_id) const {
+        if (!head_stub_) return;
+
+        orion::ObjectReport report;
+        report.set_object_id(object_id);
+        report.set_node_id(node_id_);
+
+        orion::Empty reply;
+        grpc::ClientContext ctx;
+        head_stub_->ReportObjectCreated(&ctx, report, &reply);
     }
 
 } // namespace orion::distributed
