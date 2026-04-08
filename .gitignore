@@ -26,3 +26,16 @@ build_test
 # Temporary files
 *.save
 *.log
+
+# Generated Benchmark Files
+bench_util_*
+bench_main.cpp
+bench_exec_*
+bench_src_*
+dist_obj_*
+seq_obj_*
+seq_obj_main.o
+seq_obj_util_*
+dist_obj_main.o
+dist_obj_util_*
+

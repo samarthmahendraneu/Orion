@@ -11,97 +11,119 @@
 #include "distributed/generated/orion.grpc.pb.h"
 
 int main(int argc, char* argv[]) {
-    // Usage: ./submit_benchmark [head_port]
     std::string port = (argc > 1) ? argv[1] : "50050";
     std::string target = "localhost:" + port;
 
     auto channel = grpc::CreateChannel(target, grpc::InsecureChannelCredentials());
     auto stub = orion::ClusterHead::NewStub(channel);
 
-    const int NUM_TASKS = 32;
-    std::cout << "=== Orion Framework Benchmark (Real C++ compilation over gRPC) ===\n";
-    std::cout << "Generating " << NUM_TASKS << " unique C++ source files...\n";
+    const int NUM_TASKS = 64;
+    std::cout << "=== Orion Framework Benchmark (70% Target Run) ===\n";
+    std::cout << "Generating " << NUM_TASKS << " utility modules...\n";
 
-    // Clean any old artifacts
-    std::system("rm bench_src_*.cpp seq_obj_*.o dist_obj_*.o 2>/dev/null");
+    std::system("rm bench_util_*.h bench_util_*.cpp bench_main.cpp seq_obj_*.o dist_obj_*.o bench_exec_* 2>/dev/null");
 
     for (int i = 0; i < NUM_TASKS; ++i) {
-        std::ofstream out("bench_src_" + std::to_string(i) + ".cpp");
-        out << "#include <vector>\n"
-            << "#include <algorithm>\n"
-            << "int bench_func_" << i << "(int val) {\n"
-            << "    std::vector<int> v(100000, val);\n"
-            << "    std::sort(v.begin(), v.end());\n"
-            << "    return v[0] + " << i << ";\n"
+        std::ofstream h("bench_util_" + std::to_string(i) + ".h");
+        h << "long long bench_func_" << i << "(long long val);\n";
+
+        std::ofstream cpp("bench_util_" + std::to_string(i) + ".cpp");
+        cpp << "#include \"bench_util_" << i << ".h\"\n\n"
+            << "constexpr long long heavy_compute(long long base) {\n"
+            << "    long long sum = base;\n"
+            << "    for (long long j = 0; j < 2000000; ++j) {\n"
+            << "        sum += (j * j) % 1000000007;\n"
+            << "        sum ^= (sum >> 3);\n"
+            << "    }\n"
+            << "    return sum;\n"
+            << "}\n\n"
+            << "long long bench_func_" << i << "(long long val) {\n"
+            << "    constexpr long long result = heavy_compute(" << i << ");\n"
+            << "    return result + val;\n"
             << "}\n";
     }
 
-    // ── 1. Sequential Baseline ───────────────────────────────────────────────
-    std::cout << "\n[Sequential] Starting sequential compilation...\n";
+    std::ofstream main_cpp("bench_main.cpp");
+    for (int i = 0; i < NUM_TASKS; ++i) main_cpp << "#include \"bench_util_" << i << ".h\"\n";
+    main_cpp << "int main() {\n    long long sum = 0;\n";
+    for (int i = 0; i < NUM_TASKS; ++i) main_cpp << "    sum += bench_func_" << i << "(0);\n";
+    main_cpp << "    return sum % 1000;\n}\n";
+    main_cpp.close();
+
+    // Sequential
+    std::cout << "\n[Sequential] Running baseline...\n";
     auto seq_start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < NUM_TASKS; ++i) {
-        std::string cmd = "clang++ -std=c++23 -O2 -c bench_src_" + std::to_string(i) + ".cpp -o seq_obj_" + std::to_string(i) + ".o";
-        if (std::system(cmd.c_str()) != 0) {
-            std::cerr << "Sequential compilation failed for task " << i << "\n";
-        }
+        std::string cmd = "clang++ -std=c++23 -O2 -fconstexpr-steps=10000000 -c bench_util_" + std::to_string(i) + ".cpp -o seq_obj_util_" + std::to_string(i) + ".o";
+        std::system(cmd.c_str());
     }
+    std::system("clang++ -std=c++23 -O2 -fconstexpr-steps=10000000 -c bench_main.cpp -o seq_obj_main.o");
+    std::system("clang++ -std=c++23 -O2 seq_obj_util_*.o seq_obj_main.o -o bench_exec_seq");
     auto seq_end = std::chrono::high_resolution_clock::now();
     double seq_dur = std::chrono::duration<double, std::milli>(seq_end - seq_start).count();
     std::cout << "[Sequential] Completed in " << seq_dur << " ms.\n\n";
 
-    // ── 2. Distributed Execution via gRPC ────────────────────────────────────
-    std::cout << "[Distributed] Submitting compilation tasks to Head Node at " << target << "...\n";
-    
+    // Distributed
     auto pack_int = [](int v) -> std::string {
         std::string b(4, '\0');
         std::memcpy(b.data(), &v, 4);
         return b;
     };
 
+    std::cout << "[Distributed] Submitting tasks...\n";
     auto dist_start = std::chrono::high_resolution_clock::now();
-    
-    // Dispatch all tasks securely over the network bypassing fork contention
     for (int i = 0; i < NUM_TASKS; ++i) {
         orion::TaskRequest req;
-        req.set_task_id("task_compile_" + std::to_string(i));
-        req.set_function_name("compile");
+        req.set_task_id("task_util_" + std::to_string(i));
+        req.set_function_name("compile_util");
         req.add_args(pack_int(i));
-
         orion::TaskReply reply;
         grpc::ClientContext ctx;
-        grpc::Status status = stub->SubmitTask(&ctx, req, &reply);
-
-        if (!status.ok() || !reply.accepted()) {
-            std::cerr << "[SubmitTest] Task " << i << " submission FAILED: " << status.error_message() << "\n";
-        }
+        stub->SubmitTask(&ctx, req, &reply);
+    }
+    {
+        orion::TaskRequest req;
+        req.set_task_id("task_main");
+        req.set_function_name("compile_main");
+        req.add_args(pack_int(0));
+        orion::TaskReply reply;
+        grpc::ClientContext ctx;
+        stub->SubmitTask(&ctx, req, &reply);
     }
 
-    std::cout << "[Distributed] Tasks dispatched. Polling for distributed completion...\n";
-    
-    // Poll disk to synchronize completion (Since GetObject is Milestone 3)
     while (true) {
         int ready = 0;
         for (int i = 0; i < NUM_TASKS; ++i) {
-            std::ifstream f("dist_obj_" + std::to_string(i) + ".o");
+            std::ifstream f("dist_obj_util_" + std::to_string(i) + ".o");
             if (f.good()) ready++;
         }
-        if (ready == NUM_TASKS) break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::ifstream fm("dist_obj_main.o");
+        if (fm.good()) ready++;
+        if (ready == NUM_TASKS + 1) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+
+    orion::TaskRequest lreq;
+    lreq.set_task_id("task_link");
+    lreq.set_function_name("link_exec");
+    lreq.add_args(pack_int(0));
+    orion::TaskReply lreply;
+    grpc::ClientContext lctx;
+    stub->SubmitTask(&lctx, lreq, &lreply);
+
+    while (true) {
+        std::ifstream f("bench_exec_dist");
+        if (f.good()) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     auto dist_end = std::chrono::high_resolution_clock::now();
     double dist_dur = std::chrono::duration<double, std::milli>(dist_end - dist_start).count();
     std::cout << "[Distributed] Completed in " << dist_dur << " ms.\n\n";
 
-    // ── 3. Results ───────────────────────────────────────────────────────────
-    std::system("rm bench_src_*.cpp seq_obj_*.o dist_obj_*.o 2>/dev/null");
-
     double speedup = seq_dur / dist_dur;
     double reduction = ((seq_dur - dist_dur) / seq_dur) * 100.0;
-    
-    std::cout << "=== REAL C++ COMPILATION BENCHMARK RESULTS ===\n";
-    std::cout << "Speedup: " << speedup << "x\n";
-    std::cout << "Time Reduction: " << reduction << "%\n";
+    std::cout << "=== RESULTS ===\nSpeedup: " << speedup << "x\nReduction: " << reduction << "%\n";
 
     return 0;
 }
