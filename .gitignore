@@ -44,6 +44,9 @@ seq_build/
 universal_builder
 test_project_benchmark
 questions.md
+challenges.md
+orion_questions.md
+preparations.md
 conversations/
 input/
 *.o
