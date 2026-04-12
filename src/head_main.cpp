@@ -83,11 +83,12 @@ public:
                                      const orion::ObjectReport* req,
                                      orion::Empty*) override {
         std::cout << "[Head] ReportObjectCreated  object=" << req->object_id()
-                  << "  node=" << req->node_id() << "\n" << std::flush;
+                  << "  node=" << req->node_id() 
+                  << "  hash=" << (req->hash().empty() ? "NONE" : req->hash().substr(0, 8)) << "\n" << std::flush;
 
         // Milestone 3: Notify the scheduler that the dependency is now ready.
-        // We pass an empty value for the benchmark as the file exists on disk.
-        scheduler_.put_object(req->object_id(), std::nullopt);
+        // We pass the hash for integrity verification (Apple Interview: Poisonous Worker)
+        scheduler_.put_object_with_hash(req->object_id(), std::nullopt, req->hash());
         return grpc::Status::OK;
     }
 
@@ -112,6 +113,7 @@ int main(int argc, char* argv[]) {
     // Milestone 2: use real gRPC dispatch to worker nodes
     orion::distributed::GrpcNodeClient grpc_client(registry);
     orion::distributed::ClusterScheduler scheduler(registry, grpc_client);
+    scheduler.start_background_monitoring();
 
     HeadServiceImpl service(registry, scheduler);
 

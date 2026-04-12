@@ -249,6 +249,7 @@ class TaskRequest final : public ::google::protobuf::Message
     kArgsFieldNumber = 4,
     kTaskIdFieldNumber = 1,
     kFunctionNameFieldNumber = 3,
+    kExpectedHashFieldNumber = 5,
   };
   // repeated string dep_ids = 2;
   int dep_ids_size() const;
@@ -324,12 +325,27 @@ class TaskRequest final : public ::google::protobuf::Message
   ::std::string* PROTOBUF_NONNULL _internal_mutable_function_name();
 
   public:
+  // string expected_hash = 5;
+  void clear_expected_hash() ;
+  const ::std::string& expected_hash() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_expected_hash(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_expected_hash();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_expected_hash();
+  void set_allocated_expected_hash(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_expected_hash() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_expected_hash(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_expected_hash();
+
+  public:
   // @@protoc_insertion_point(class_scope:orion.TaskRequest)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<2, 4,
-                                   0, 53,
+  static const ::google::protobuf::internal::TcParseTable<3, 5,
+                                   0, 66,
                                    2>
       _table_;
 
@@ -354,6 +370,7 @@ class TaskRequest final : public ::google::protobuf::Message
     ::google::protobuf::RepeatedPtrField<::std::string> args_;
     ::google::protobuf::internal::ArenaStringPtr task_id_;
     ::google::protobuf::internal::ArenaStringPtr function_name_;
+    ::google::protobuf::internal::ArenaStringPtr expected_hash_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -506,6 +523,7 @@ class TaskReply final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kNodeIdFieldNumber = 2,
+    kOutputHashFieldNumber = 3,
     kAcceptedFieldNumber = 1,
   };
   // string node_id = 2;
@@ -523,6 +541,21 @@ class TaskReply final : public ::google::protobuf::Message
   ::std::string* PROTOBUF_NONNULL _internal_mutable_node_id();
 
   public:
+  // string output_hash = 3;
+  void clear_output_hash() ;
+  const ::std::string& output_hash() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_output_hash(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_output_hash();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_output_hash();
+  void set_allocated_output_hash(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_output_hash() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_output_hash(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_output_hash();
+
+  public:
   // bool accepted = 1;
   void clear_accepted() ;
   bool accepted() const;
@@ -537,8 +570,8 @@ class TaskReply final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<1, 2,
-                                   0, 31,
+  static const ::google::protobuf::internal::TcParseTable<2, 3,
+                                   0, 42,
                                    2>
       _table_;
 
@@ -560,6 +593,7 @@ class TaskReply final : public ::google::protobuf::Message
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr node_id_;
+    ::google::protobuf::internal::ArenaStringPtr output_hash_;
     bool accepted_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -1116,6 +1150,7 @@ class ObjectReport final : public ::google::protobuf::Message
   enum : int {
     kObjectIdFieldNumber = 1,
     kNodeIdFieldNumber = 2,
+    kHashFieldNumber = 3,
   };
   // string object_id = 1;
   void clear_object_id() ;
@@ -1147,12 +1182,27 @@ class ObjectReport final : public ::google::protobuf::Message
   ::std::string* PROTOBUF_NONNULL _internal_mutable_node_id();
 
   public:
+  // string hash = 3;
+  void clear_hash() ;
+  const ::std::string& hash() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_hash(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_hash();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_hash();
+  void set_allocated_hash(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_hash() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_hash(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_hash();
+
+  public:
   // @@protoc_insertion_point(class_scope:orion.ObjectReport)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<1, 2,
-                                   0, 43,
+  static const ::google::protobuf::internal::TcParseTable<2, 3,
+                                   0, 47,
                                    2>
       _table_;
 
@@ -1175,6 +1225,7 @@ class ObjectReport final : public ::google::protobuf::Message
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr object_id_;
     ::google::protobuf::internal::ArenaStringPtr node_id_;
+    ::google::protobuf::internal::ArenaStringPtr hash_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -2389,6 +2440,71 @@ TaskRequest::_internal_mutable_args() {
   return &_impl_.args_;
 }
 
+// string expected_hash = 5;
+inline void TaskRequest::clear_expected_hash() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.expected_hash_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000010U);
+}
+inline const ::std::string& TaskRequest::expected_hash() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:orion.TaskRequest.expected_hash)
+  return _internal_expected_hash();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void TaskRequest::set_expected_hash(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  _impl_.expected_hash_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:orion.TaskRequest.expected_hash)
+}
+inline ::std::string* PROTOBUF_NONNULL TaskRequest::mutable_expected_hash()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  ::std::string* _s = _internal_mutable_expected_hash();
+  // @@protoc_insertion_point(field_mutable:orion.TaskRequest.expected_hash)
+  return _s;
+}
+inline const ::std::string& TaskRequest::_internal_expected_hash() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.expected_hash_.Get();
+}
+inline void TaskRequest::_internal_set_expected_hash(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.expected_hash_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL TaskRequest::_internal_mutable_expected_hash() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.expected_hash_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE TaskRequest::release_expected_hash() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:orion.TaskRequest.expected_hash)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000010U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
+  auto* released = _impl_.expected_hash_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.expected_hash_.Set("", GetArena());
+  }
+  return released;
+}
+inline void TaskRequest::set_allocated_expected_hash(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
+  }
+  _impl_.expected_hash_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.expected_hash_.IsDefault()) {
+    _impl_.expected_hash_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:orion.TaskRequest.expected_hash)
+}
+
 // -------------------------------------------------------------------
 
 // TaskReply
@@ -2398,7 +2514,7 @@ inline void TaskReply::clear_accepted() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.accepted_ = false;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000002U);
+                  0x00000004U);
 }
 inline bool TaskReply::accepted() const {
   // @@protoc_insertion_point(field_get:orion.TaskReply.accepted)
@@ -2406,7 +2522,7 @@ inline bool TaskReply::accepted() const {
 }
 inline void TaskReply::set_accepted(bool value) {
   _internal_set_accepted(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
   // @@protoc_insertion_point(field_set:orion.TaskReply.accepted)
 }
 inline bool TaskReply::_internal_accepted() const {
@@ -2481,6 +2597,71 @@ inline void TaskReply::set_allocated_node_id(::std::string* PROTOBUF_NULLABLE va
     _impl_.node_id_.Set("", GetArena());
   }
   // @@protoc_insertion_point(field_set_allocated:orion.TaskReply.node_id)
+}
+
+// string output_hash = 3;
+inline void TaskReply::clear_output_hash() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.output_hash_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline const ::std::string& TaskReply::output_hash() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:orion.TaskReply.output_hash)
+  return _internal_output_hash();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void TaskReply::set_output_hash(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.output_hash_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:orion.TaskReply.output_hash)
+}
+inline ::std::string* PROTOBUF_NONNULL TaskReply::mutable_output_hash()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::std::string* _s = _internal_mutable_output_hash();
+  // @@protoc_insertion_point(field_mutable:orion.TaskReply.output_hash)
+  return _s;
+}
+inline const ::std::string& TaskReply::_internal_output_hash() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.output_hash_.Get();
+}
+inline void TaskReply::_internal_set_output_hash(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.output_hash_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL TaskReply::_internal_mutable_output_hash() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.output_hash_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE TaskReply::release_output_hash() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:orion.TaskReply.output_hash)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000002U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  auto* released = _impl_.output_hash_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.output_hash_.Set("", GetArena());
+  }
+  return released;
+}
+inline void TaskReply::set_allocated_output_hash(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  }
+  _impl_.output_hash_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.output_hash_.IsDefault()) {
+    _impl_.output_hash_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:orion.TaskReply.output_hash)
 }
 
 // -------------------------------------------------------------------
@@ -2615,6 +2796,71 @@ inline void ObjectReport::set_allocated_node_id(::std::string* PROTOBUF_NULLABLE
     _impl_.node_id_.Set("", GetArena());
   }
   // @@protoc_insertion_point(field_set_allocated:orion.ObjectReport.node_id)
+}
+
+// string hash = 3;
+inline void ObjectReport::clear_hash() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.hash_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000004U);
+}
+inline const ::std::string& ObjectReport::hash() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:orion.ObjectReport.hash)
+  return _internal_hash();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void ObjectReport::set_hash(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  _impl_.hash_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:orion.ObjectReport.hash)
+}
+inline ::std::string* PROTOBUF_NONNULL ObjectReport::mutable_hash()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  ::std::string* _s = _internal_mutable_hash();
+  // @@protoc_insertion_point(field_mutable:orion.ObjectReport.hash)
+  return _s;
+}
+inline const ::std::string& ObjectReport::_internal_hash() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.hash_.Get();
+}
+inline void ObjectReport::_internal_set_hash(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.hash_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL ObjectReport::_internal_mutable_hash() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.hash_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE ObjectReport::release_hash() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:orion.ObjectReport.hash)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000004U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  auto* released = _impl_.hash_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.hash_.Set("", GetArena());
+  }
+  return released;
+}
+inline void ObjectReport::set_allocated_hash(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  }
+  _impl_.hash_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.hash_.IsDefault()) {
+    _impl_.hash_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:orion.ObjectReport.hash)
 }
 
 // -------------------------------------------------------------------

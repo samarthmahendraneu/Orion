@@ -11,6 +11,8 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <chrono>
+#include <thread>
 
 #include "../cluster/node_registry.h"
 #include "../rpc/node_client.h"
@@ -24,37 +26,48 @@ namespace orion::distributed {
     // - chooses nodes
     // - dispatches tasks
     // - tracks object locations
+    struct InFlightTask {
+        orion::Task task;
+        std::string node_id;
+        std::chrono::steady_clock::time_point start_time;
+        std::string expected_hash;
+        bool is_speculative = false;
+    };
+
     class ClusterScheduler : public GlobalObjectStore {
     public:
         ClusterScheduler(NodeRegistry& registry, NodeClient& client);
 
-        // Submit a task to the cluster (may or may not dispatch immediately).
-        // Returns ObjectRef for the output object (id == task.id).
         orion::ObjectRef submit(orion::Task task);
-
-        // Try to dispatch any runnable tasks.
         void schedule();
 
-        // From GlobalObjectStore interface
         std::optional<std::any> get_object(const std::string& object_id) override;
-
-        // Called when an object is computed on a node
+        
+        // Updated to handle reported hashes
         void put_object(const std::string& object_id, std::any value) override;
+        void put_object_with_hash(const std::string& object_id, std::any value, const std::string& hash);
+
+        // Straggler detection
+        void check_speculative_execution();
+        void start_background_monitoring();
 
     private:
-        bool deps_ready_(const orion::Task& task) const;
+        std::vector<std::pair<std::string, orion::Task>> plan_dispatches_internal_();
+        bool deps_ready_internal_(const orion::Task& task) const;
 
     private:
         NodeRegistry& registry_;
         NodeClient& client_;
 
-        // object_id -> std::any
         std::unordered_map<std::string, std::any> global_objects_;
-
-        // tasks waiting for deps
         std::queue<orion::Task> pending_;
+        
+        // object_id -> InFlightTask
+        std::unordered_map<std::string, InFlightTask> in_flight_;
 
         mutable std::mutex mu_;
+        std::unique_ptr<std::jthread> monitor_thread_;
+        bool running_ = true;
     };
 
 } // namespace orion::distributed

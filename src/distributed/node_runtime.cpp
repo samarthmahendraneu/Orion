@@ -108,12 +108,14 @@ namespace orion::distributed {
         }
     }
 
-    void NodeRuntime::report_object_created(const std::string& object_id) const {
+    void NodeRuntime::report_object_created(const std::string& object_id,
+                                            const std::string& hash) const {
         if (!head_stub_) return;
 
         orion::ObjectReport report;
         report.set_object_id(object_id);
         report.set_node_id(node_id_);
+        report.set_hash(hash);
 
         orion::Empty reply;
         grpc::ClientContext ctx;

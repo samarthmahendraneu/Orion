@@ -17,6 +17,7 @@
 #include "distributed/functions/function_registry.h"
 #include "core/task.h"
 #include "core/object_ref.h"
+#include "distributed/functions/hash_util.h"
 
 namespace orion::distributed {
 
@@ -74,11 +75,33 @@ public:
                 literal_args.empty() ? dep_vals : literal_args;
 
             std::any result = fn_reg_.invoke(fn_name, effective_args);
+            
+            // --- Integrity Hashing (Apple Interview: Poisonous Worker Prevention) ---
+            std::string output_hash = "";
+            for (const auto& arg : effective_args) {
+                if (arg.type() == typeid(std::string)) {
+                    std::string cmd = std::any_cast<std::string>(arg);
+                    size_t o_pos = cmd.find("-o ");
+                    if (o_pos != std::string::npos) {
+                        std::string rest = cmd.substr(o_pos + 3);
+                        std::stringstream ss(rest);
+                        std::string filename;
+                        ss >> filename;
+                        output_hash = compute_file_sha256(filename);
+                        if (!output_hash.empty()) {
+                            std::cout << "[Node:" << node_.node_id() 
+                                      << "] Integrity Hash(" << filename << ")=" << output_hash << "\n" << std::flush;
+                            break; // Stop after finding first output file
+                        }
+                    }
+                }
+            }
+
             std::cout << "[Node:" << node_.node_id()
                       << "] Task complete  fn=" << fn_name << "\n" << std::flush;
 
             // Milestone 3: Notify the head that the object is ready
-            node_.report_object_created(task_id);
+            node_.report_object_created(task_id, output_hash);
             return result;
         };
 

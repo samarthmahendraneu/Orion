@@ -20,8 +20,11 @@ export PKG_CONFIG_PATH := /opt/homebrew/opt/grpc/lib/pkgconfig:/opt/homebrew/opt
 SRC := src
 GEN_DIR := $(SRC)/distributed/generated
 
-GRPC_INC := $(shell pkg-config --cflags grpc++ protobuf) -I$(SRC)
-GRPC_LIB := $(shell pkg-config --libs grpc++ protobuf)
+# Use absolute path for Homebrew tools
+PKG_CONFIG := /opt/homebrew/bin/pkg-config
+
+GRPC_INC := $(shell $(PKG_CONFIG) --cflags grpc++ protobuf) -I$(SRC)
+GRPC_LIB := $(shell $(PKG_CONFIG) --libs grpc++ protobuf)
 
 # ─────────────────────────────────────────────
 # Generated proto files

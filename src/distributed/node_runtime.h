@@ -44,7 +44,8 @@ namespace orion::distributed {
         const std::string& address()  const { return address_; }
 
         // Milestone 3: Notify head that task results are ready
-        void report_object_created(const std::string& object_id) const;
+        void report_object_created(const std::string& object_id,
+                                   const std::string& hash = "") const;
 
     private:
         std::unique_ptr<orion::Runtime> runtime_;
