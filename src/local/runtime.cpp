@@ -8,11 +8,11 @@
 
 namespace orion {
 
-    Runtime::Runtime(size_t num_workers) {
+    Runtime::Runtime(size_t num_workers, std::string node_id) : node_id_(std::move(node_id)) {
 
         // Create workers
         for (size_t i = 0; i < num_workers; ++i) {
-            workers_.push_back(std::make_unique<Worker>(store_));
+            workers_.push_back(std::make_unique<Worker>(store_, node_id_));
         }
 
         // Collect raw pointers for scheduler

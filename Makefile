@@ -20,8 +20,11 @@ export PKG_CONFIG_PATH := /opt/homebrew/opt/grpc/lib/pkgconfig:/opt/homebrew/opt
 SRC := src
 GEN_DIR := $(SRC)/distributed/generated
 
-GRPC_INC := $(shell pkg-config --cflags grpc++ protobuf) -I$(SRC)
-GRPC_LIB := $(shell pkg-config --libs grpc++ protobuf)
+# Use absolute path for Homebrew tools
+PKG_CONFIG := /opt/homebrew/bin/pkg-config
+
+GRPC_INC := $(shell $(PKG_CONFIG) --cflags grpc++ protobuf) -I$(SRC)
+GRPC_LIB := $(shell $(PKG_CONFIG) --libs grpc++ protobuf)
 
 # ─────────────────────────────────────────────
 # Generated proto files
@@ -36,6 +39,7 @@ GEN_OBJS := $(GEN_SRCS:.cc=.o)
 # Source groups
 # ─────────────────────────────────────────────
 CORE_SRCS := \
+	$(SRC)/core/context.cpp \
 	$(SRC)/core/worker.cpp \
 	$(SRC)/core/object_store.cpp \
 	$(SRC)/core/scheduler.cpp \
@@ -53,12 +57,32 @@ NODE_RT_SRC := $(SRC)/distributed/node_runtime.cpp
 MAIN_SRCS := $(SRC)/main.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC)
 HEAD_SRCS := $(SRC)/head_main.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC)
 NODE_SRCS := $(SRC)/node_main.cpp $(CORE_SRCS) $(NODE_RT_SRC) $(FUNC_SRCS)
-SUBMIT_SRCS := $(SRC)/submit_test.cpp
+SUBMIT_SRCS := benchmarks/simple_task_test.cpp
+SUBMIT_BENCHMARK_SRCS := benchmarks/compiler_wide_dag.cpp
+TEST_PROJECT_BENCHMARK_SRCS := benchmarks/test_project_dag.cpp
+UNIVERSAL_BUILDER_SRCS := benchmarks/universal_cmake_orchestrator.cpp
 
 MAIN_OBJS := $(MAIN_SRCS:.cpp=.o)
 HEAD_OBJS := $(HEAD_SRCS:.cpp=.o)
 NODE_OBJS := $(NODE_SRCS:.cpp=.o)
 SUBMIT_OBJS := $(SUBMIT_SRCS:.cpp=.o)
+SUBMIT_BENCHMARK_OBJS := $(SUBMIT_BENCHMARK_SRCS:.cpp=.o)
+TEST_PROJECT_BENCHMARK_OBJS := $(TEST_PROJECT_BENCHMARK_SRCS:.cpp=.o)
+UNIVERSAL_BUILDER_OBJS := $(UNIVERSAL_BUILDER_SRCS:.cpp=.o)
+
+BUILD_ENGINE_SRCS :=
+
+BUILD_TEST_SRCS := tests/build_test.cpp $(CORE_SRCS) $(BUILD_ENGINE_SRCS)
+BUILD_TEST_OBJS := $(BUILD_TEST_SRCS:.cpp=.o)
+
+BUILD_CLUSTER_TEST_SRCS := tests/build_cluster_test.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC) $(BUILD_ENGINE_SRCS)
+BUILD_CLUSTER_TEST_OBJS := $(BUILD_CLUSTER_TEST_SRCS:.cpp=.o)
+
+BUILD_COMPLEX_TEST_SRCS := tests/build_complex_test.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC) $(BUILD_ENGINE_SRCS)
+BUILD_COMPLEX_TEST_OBJS := $(BUILD_COMPLEX_TEST_SRCS:.cpp=.o)
+
+BENCHMARK_TEST_SRCS := tests/benchmark_test.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC) $(BUILD_ENGINE_SRCS)
+BENCHMARK_TEST_OBJS := $(BENCHMARK_TEST_SRCS:.cpp=.o)
 
 # ─────────────────────────────────────────────
 # Targets
@@ -74,6 +98,27 @@ node: $(NODE_OBJS) $(GEN_OBJS)
 
 submit_test: $(SUBMIT_OBJS) $(GEN_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o submit_test
+
+submit_benchmark: $(SUBMIT_BENCHMARK_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o submit_benchmark
+
+build_test: $(BUILD_TEST_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o build_test
+
+build_cluster_test: $(BUILD_CLUSTER_TEST_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o build_cluster_test
+
+build_complex_test: $(BUILD_COMPLEX_TEST_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o build_complex_test
+
+benchmark_test: $(BENCHMARK_TEST_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o benchmark_test
+
+test_project_benchmark: $(TEST_PROJECT_BENCHMARK_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o test_project_benchmark
+
+universal_builder: $(UNIVERSAL_BUILDER_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o universal_builder
 
 # ─────────────────────────────────────────────
 # Debug builds
@@ -125,8 +170,8 @@ node_asan:
 # Clean
 # ─────────────────────────────────────────────
 clean:
-	rm -f $(SRC)/**/*.o $(SRC)/**/*.d $(SRC)/*.o $(SRC)/*.d main head node submit_test 2>/dev/null || true
+	rm -f $(SRC)/**/*.o $(SRC)/**/*.d $(SRC)/*.o $(SRC)/*.d benchmarks/*.o benchmarks/*.d tests/*.o tests/*.d *.o *.d main head node submit_test submit_benchmark test_project_benchmark universal_builder build_test build_cluster_test build_complex_test 2>/dev/null || true
 
-.PHONY: main head node submit_test clean \
+.PHONY: main head node submit_test submit_benchmark test_project_benchmark build_test build_cluster_test build_complex_test clean \
 	main_debug head_debug node_debug \
 	main_asan head_asan node_asan

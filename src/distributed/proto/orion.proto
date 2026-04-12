@@ -28,16 +28,19 @@ message TaskRequest {
   repeated string dep_ids = 2;
   string function_name = 3;
   repeated bytes args = 4;
+  string expected_hash = 5;
 }
 
 message TaskReply {
   bool accepted = 1;
   string node_id = 2;
+  string output_hash = 3;
 }
 
 message ObjectReport {
   string object_id = 1;
   string node_id = 2;
+  string hash = 3;
 }
 
 message ObjectLocationRequest {

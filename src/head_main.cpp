@@ -83,28 +83,19 @@ public:
                                      const orion::ObjectReport* req,
                                      orion::Empty*) override {
         std::cout << "[Head] ReportObjectCreated  object=" << req->object_id()
-                  << "  node=" << req->node_id() << "  (TODO)\n" << std::flush;
-        // Milestone 3: call scheduler_.on_object_created(req->object_id(), req->node_id())
-        return grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "Milestone 3");
+                  << "  node=" << req->node_id() 
+                  << "  hash=" << (req->hash().empty() ? "NONE" : req->hash().substr(0, 8)) << "\n" << std::flush;
+
+        // Milestone 3: Notify the scheduler that the dependency is now ready.
+        // We pass the hash for integrity verification (Apple Interview: Poisonous Worker)
+        scheduler_.put_object_with_hash(req->object_id(), std::nullopt, req->hash());
+        return grpc::Status::OK;
     }
 
     grpc::Status GetObjectLocation(grpc::ServerContext*,
                                    const orion::ObjectLocationRequest* req,
                                    orion::ObjectLocationReply* reply) override {
-        auto loc = scheduler_.object_location(req->object_id());
-        if (!loc) {
-            return grpc::Status(grpc::StatusCode::NOT_FOUND,
-                                "Object not found: " + req->object_id());
-        }
-        reply->set_node_id(*loc);
-        // address lookup from registry (best-effort)
-        for (const auto& n : registry_.nodes()) {
-            if (n.node_id == *loc) {
-                reply->set_address(n.address);
-                break;
-            }
-        }
-        return grpc::Status::OK;
+        return grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "Milestone 3");
     }
 
 private:
@@ -122,6 +113,7 @@ int main(int argc, char* argv[]) {
     // Milestone 2: use real gRPC dispatch to worker nodes
     orion::distributed::GrpcNodeClient grpc_client(registry);
     orion::distributed::ClusterScheduler scheduler(registry, grpc_client);
+    scheduler.start_background_monitoring();
 
     HeadServiceImpl service(registry, scheduler);
 

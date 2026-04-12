@@ -1,0 +1,53 @@
+# Build artifacts
+*.o
+*.d
+*.a
+*.dylib
+*.so
+
+# Executables (Mac/Linux)
+benchmark_test
+build_cluster_test
+build_complex_test
+complex_app
+head
+node
+submit_benchmark
+submit_test
+build_test
+
+# IDE / Editor folders
+.vscode/
+.idea/
+
+# macOS system files
+.DS_Store
+
+# Temporary files
+*.save
+*.log
+
+# Generated Benchmark Files
+bench_util_*
+bench_main.cpp
+bench_exec_*
+bench_src_*
+dist_obj_*
+seq_obj_*
+seq_obj_main.o
+seq_obj_util_*
+dist_obj_main.o
+dist_obj_util_*
+# Orion Build Artifacts
+dist_build/
+seq_build/
+universal_builder
+test_project_benchmark
+questions.md
+challenges.md
+orion_questions.md
+preparations.md
+conversations/
+input/
+*.o
+build/

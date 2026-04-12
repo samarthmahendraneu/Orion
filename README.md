@@ -8,9 +8,10 @@ Orion models computation as a **dataflow graph**: tasks declare their inputs as 
 
 | Tier | What it does |
 |---|---|
-| **Core** | Tasks, workers, scheduler, object store — the engine |
+| **Core** | Tasks, workers, scheduler, object store — the high-performance engine |
 | **Local** | `Runtime` — a clean façade over the core for single-process use |
-| **Distributed** | `NodeRuntime`, `ClusterScheduler`, `NodeRegistry`, `NodeClient` — multi-node execution |
+| **Distributed** | `NodeRuntime`, `ClusterScheduler`, `NodeRegistry`, `NodeClient` — gRPC-based cluster orchestration |
+| **Hardened** | **Speculative Execution** (Straggler Mitigation) & **SHA-256 Integrity Verification** |
 
 ---
 
@@ -157,9 +158,10 @@ Maintains the live set of nodes known to the cluster.
 Cluster-wide counterpart to the local `Scheduler`.
 
 - Accepts tasks via `submit(task)`
-- Gates dispatch on dep readiness (checks `object_locations_` map)
-- Picks a target node from `NodeRegistry` and fires `NodeClient::submit_task`
-- Records expected object location optimistically at dispatch time (v0.2 assumption; node-reported confirmations are planned)
+- Gates dispatch on dep readiness (checks internal `global_objects_` map)
+- **Plan-then-Dispatch Model**: Decouples dependency resolution from network I/O to prevent deadlocks and optimize throughput.
+- **Speculative Execution**: Monitors task latency and dispatches "clones" to bypass node stragglers.
+- **Integrity Verification**: Verifies SHA-256 hashes of results against expected values to prevent the "Poisonous Worker" problem.
 
 ```
 ClusterScheduler::submit(task)
@@ -328,7 +330,9 @@ CXX=g++ make
 
 ## Current Status
 
-### Implemented
+#### Phase 1 — Core Engine & Local Runtime
+- **The Issue**: Sequential build scripts fail to utilize multi-core hardware and manual dependency management is fragile.
+- **The Solution**: **Dataflow DAG Scheduler**. Built a thread-safe task engine that automatically resolves dependencies and dispatches ready tasks to a worker pool.
 - [x] Core task execution engine (workers, scheduler, object store)
 - [x] Local `Runtime` façade
 - [x] `NodeRuntime` (per-node wrapper with lifecycle management)
@@ -340,43 +344,52 @@ CXX=g++ make
 
 ### In Progress / Planned
 
-#### Phase 2 — Real Transport & Fault Tolerance
-- [x] Real RPC transport (gRPC or custom TCP) replacing `InProcessNodeClient`
-- [ ] Node-reported object location confirmations (replacing optimistic v0.2 assumption)
-- [ ] Heartbeat-based node liveness and dead-node eviction
+#### Phase 2 — gRPC Cluster & Fault Tolerance
+- **The Issue**: Local resources (CPU/RAM) are a hard ceiling for massive builds. Scaling requires moving from shared-memory threads to independent networked processes.
+- **The Solution**: **gRPC Orchestration**. Implemented a Head-to-Worker RPC layer with a centralized `NodeRegistry` and `ReportObjectCreated` callbacks, enabling horizontal scaling.
+- [x] Real RPC transport (gRPC) replacing `InProcessNodeClient`
+- [x] Node-reported object location confirmations (ReportObjectCreated)
+- [x] Heartbeat-based node liveness 
 - [ ] Task failure handling and retry with configurable policies
 - [ ] Work-stealing across nodes
 
 #### Phase 3 — Ad-hoc Distributed Data Computation
+- **The Issue**: The Head is a central bandwidth bottleneck. All task outputs flow from Worker -> Head, and all inputs flow Head -> Worker. For large binaries, the Head's network interface would saturate.
+- **Production Solution**: Implement **P2P CAS (Content Addressable Storage)**. Use a pull-based fetching model (similar to Ray Plasma) where workers fetch dependencies directly from the producing node.
 - [ ] Cross-process object serialization (replace `std::any` with a wire format)
-- [ ] Cross-node object transfer — automatic fetch when an input object lives on a remote node
-- [ ] Distributed object store (shared-memory + TCP pull, similar to Ray Plasma)
+- [ ] Distributed object store (shared-memory + TCP pull)
 - [ ] Streaming / chunked object support for large datasets
-- [ ] Map / reduce primitives built on top of the task graph
 
-#### Phase 4 — Dynamic Task Graphs
-- [ ] Tasks can submit sub-tasks at runtime (nested parallelism)
-- [ ] Support for recursive and speculative task patterns
+#### Phase 4 — Security & Reliability (Hardening)
+- **The Issue**: Remote workers are "black boxes" that could return corrupted artifacts. Additionally, single slow nodes ("stragglers") can bottleneck the entire build.
+- **The Solution**: **Speculative Execution & SHA-256 Hashing**. Integrated cryptographic verification for all artifacts and a "racing" mechanism to bypass node-level variance.
+- [x] **Speculative Execution**: Heuristic-based straggler detection and task cloning
+- [x] **Poisonous Worker Protection**: SHA-256 content-based integrity verification
+- [x] **Concurrency Hardening**: "Plan-then-Dispatch" scheduler refactor for deadlock-free orchestration
+- [ ] Support for recursive and speculative task patterns in core
 - [ ] `ObjectRef` as a first-class future passable between tasks at runtime
 - [ ] Group / barrier synchronisation primitives
 
 #### Phase 5 — GPU & Heterogeneous Scheduling
+- **The Issue**: Current scheduler assumes all nodes are identical. Scheduling a GPU-heavy task (like a Metal shader) on a CPU-only node leads to immediate failure or massive latency.
+- **Production Solution**: Implement **Resource-Aware Scheduling**. Nodes heartbeat a telemetry vector (CPU/RAM/GPU), and the scheduler performs constraint-based matching (e.g., "Schedule only on M-series GPU").
 - [ ] Resource annotations on `Task` (CPU cores, GPU count, memory)
-- [ ] GPU-aware node selection in `ClusterScheduler` / `NodeRegistry`
-- [ ] CUDA stream integration for GPU task execution
+- [ ] GPU-aware node selection in `ClusterScheduler`
 - [ ] Mixed CPU + GPU pipeline scheduling
 
-#### Phase 6 — Global Control Store (GCS)
+#### Phase 6 — Global Control Store (GCS) & High Availability
+- **The Issue**: The `ClusterHead` is a Single Point of Failure (SPOF) and state is in-memory. If the Head process crashes, the entire build DAG and progress are lost.
+- **Production Solution**: Implement **Raft-based Consensus**. Use a persistent GCS (like Etcd) to mirror cluster state and enable instant Leader election/failover for the Head node.
 - [ ] Centralized GCS process for cluster-wide state (node registry, object table)
-- [ ] Automatic node discovery and registration via GCS on `NodeRuntime::start()`
 - [ ] Fault-tolerant GCS with persistent backing store
-- [ ] Pub/sub object-ready notifications replacing polling
+- [ ] Pub/sub object-ready notifications
 
 #### Phase 7 — Dashboard & Observability
+- **The Issue**: Distributed builds are "black boxes." Pinpointing which node failed or why a specific module is slow requires manual log-diving across dozens of machines.
+- **Production Solution**: **Distributed Tracing & Heatmaps**. Integrate OpenTelemetry to visualize DAG execution, identify "hotspot" nodes, and analyze critical-path latency in real-time.
 - [ ] REST API exposing cluster state (nodes, tasks, object locations)
-- [ ] Web dashboard: live task graph visualisation, node health, throughput metrics
-- [ ] Distributed tracing (task lineage from submission to completion)
-- [ ] Prometheus-compatible metrics endpoint
+- [ ] Web dashboard: live task graph visualisation
+- [ ] Distributed tracing (task lineage)
 
 ---
 
