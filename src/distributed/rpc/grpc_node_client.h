@@ -10,6 +10,7 @@
 #include <mutex>
 #include <memory>
 #include <iostream>
+#include <chrono>
 
 #include <grpcpp/grpcpp.h>
 #include "../generated/orion.grpc.pb.h"
@@ -26,13 +27,22 @@ public:
 
     // Convert orion::Task → TaskRequest proto and call NodeService::ExecuteTask.
     // The task MUST have function_name set; dep_ids are passed as proto repeated strings.
-    orion::ObjectRef submit_task(const std::string& node_id,
-                                 orion::Task task) override
+    //
+    // Returns true iff the node accepted the task. Null-stub (unknown node)
+    // and RPC failures both return false so the ClusterScheduler can re-queue
+    // the task on a different node instead of pretending it was dispatched.
+    bool submit_task(const std::string& node_id,
+                     orion::Task task) override
     {
         auto* stub = get_or_create_stub(node_id);
         if (!stub) {
-            std::cerr << "[GrpcNodeClient] No stub for node=" << node_id << "\n";
-            return orion::ObjectRef{task.id};
+            // Previously this returned a fake-success ObjectRef which caused
+            // the scheduler to record the task as in-flight forever. Now we
+            // signal failure cleanly.
+            std::cerr << "[GrpcNodeClient] ERROR: no stub for node_id=" << node_id
+                      << " task=" << task.id
+                      << " — dispatch FAILED (node not registered or address empty)\n";
+            return false;
         }
 
         // Build proto request
@@ -49,21 +59,34 @@ public:
 
         ::orion::TaskReply reply;
         grpc::ClientContext ctx;
+        // Hard deadline so a hung node can't pin a scheduler thread indefinitely.
+        ctx.set_deadline(std::chrono::system_clock::now() +
+                         std::chrono::seconds(kExecuteTaskDeadlineSec));
 
         grpc::Status status = stub->ExecuteTask(&ctx, req, &reply);
 
         if (status.ok() && reply.accepted()) {
             std::cout << "[GrpcNodeClient] ExecuteTask(" << task.id
                       << ") accepted by " << node_id << "\n" << std::flush;
-        } else {
-            std::cerr << "[GrpcNodeClient] ExecuteTask FAILED for task="
-                      << task.id << ": " << status.error_message() << "\n";
+            return true;
         }
-
-        return orion::ObjectRef{task.id};
+        std::cerr << "[GrpcNodeClient] ExecuteTask FAILED task=" << task.id
+                  << " node=" << node_id
+                  << " grpc_code=" << status.error_code()
+                  << " accepted=" << reply.accepted()
+                  << " msg=" << status.error_message() << "\n" << std::flush;
+        // On transport failure, drop the cached stub so the next retry re-opens
+        // the channel (the peer may have restarted on a new address/socket).
+        {
+            std::lock_guard<std::mutex> lock(mu_);
+            stubs_.erase(node_id);
+        }
+        return false;
     }
 
 private:
+    static constexpr int kExecuteTaskDeadlineSec = 5;
+
     // Returns raw pointer to stub (owned by stubs_ map).
     // Creates a new stub if this node_id hasn't been seen yet.
     orion::NodeService::Stub* get_or_create_stub(const std::string& node_id) {

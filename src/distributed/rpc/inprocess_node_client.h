@@ -10,7 +10,8 @@
 
 #include <unordered_map>
 #include <string>
-#include <stdexcept>
+#include <iostream>
+#include <exception>
 
 #include "node_client.h"
 #include "../node_runtime.h"
@@ -23,12 +24,30 @@ namespace orion::distributed {
             nodes_[node_id] = node;
         }
 
-        orion::ObjectRef submit_task(const std::string& node_id, orion::Task task) override {
+        // Returns true on successful local submission, false if the node is
+        // unknown / null or the local runtime throws. We no longer throw here
+        // — the ClusterScheduler needs a recoverable failure signal so it can
+        // re-queue the task on a different node instead of aborting the
+        // cluster process.
+        bool submit_task(const std::string& node_id, orion::Task task) override {
             auto it = nodes_.find(node_id);
             if (it == nodes_.end() || it->second == nullptr) {
-                throw std::runtime_error("Unknown node_id: " + node_id);
+                std::cerr << "[InProcessNodeClient] ERROR: unknown node_id="
+                          << node_id << " task=" << task.id
+                          << " — dispatch FAILED\n";
+                return false;
             }
-            return it->second->local_runtime().submit(std::move(task));
+            try {
+                (void) it->second->local_runtime().submit(std::move(task));
+                return true;
+            } catch (const std::exception& e) {
+                std::cerr << "[InProcessNodeClient] ERROR: submit threw: "
+                          << e.what() << "\n";
+                return false;
+            } catch (...) {
+                std::cerr << "[InProcessNodeClient] ERROR: submit threw unknown exception\n";
+                return false;
+            }
         }
 
     private:

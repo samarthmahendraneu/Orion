@@ -5,6 +5,8 @@
 #include "node_runtime.h"
 
 #include <iostream>
+#include <thread>
+#include <chrono>
 #include <grpcpp/grpcpp.h>
 #include "distributed/generated/orion.grpc.pb.h"
 
@@ -112,14 +114,66 @@ namespace orion::distributed {
                                             const std::string& hash) const {
         if (!head_stub_) return;
 
-        orion::ObjectReport report;
-        report.set_object_id(object_id);
-        report.set_node_id(node_id_);
-        report.set_hash(hash);
+        // Reliability fix:
+        //   Previously the grpc::Status from ReportObjectCreated was discarded.
+        //   If the call failed (head restarting, transient network error, TCP
+        //   RST after a long pause, etc.), the head would never learn that the
+        //   task had completed, and every downstream task waiting on this
+        //   object would silently wait forever — the single nastiest
+        //   data-loss class in the system.
+        //
+        //   We now:
+        //     1. Set an RPC deadline so a hung head cannot pin this worker thread.
+        //     2. Retry up to kMaxAttempts with exponential backoff.
+        //     3. Log every failed attempt and a CRITICAL line if we give up
+        //        (so the failure is at least loud instead of silent).
+        constexpr int kMaxAttempts = 5;
+        constexpr int kInitialBackoffMs = 100;
+        constexpr int kPerAttemptDeadlineSec = 3;
 
-        orion::Empty reply;
-        grpc::ClientContext ctx;
-        head_stub_->ReportObjectCreated(&ctx, report, &reply);
+        auto backoff = std::chrono::milliseconds(kInitialBackoffMs);
+
+        for (int attempt = 1; attempt <= kMaxAttempts; ++attempt) {
+            orion::ObjectReport report;
+            report.set_object_id(object_id);
+            report.set_node_id(node_id_);
+            report.set_hash(hash);
+
+            orion::Empty reply;
+            grpc::ClientContext ctx;
+            ctx.set_deadline(std::chrono::system_clock::now() +
+                             std::chrono::seconds(kPerAttemptDeadlineSec));
+
+            grpc::Status status = head_stub_->ReportObjectCreated(&ctx, report, &reply);
+            if (status.ok()) {
+                if (attempt > 1) {
+                    std::cout << "[NodeRuntime:" << node_id_
+                              << "] ReportObjectCreated succeeded on attempt "
+                              << attempt << " object=" << object_id << "\n"
+                              << std::flush;
+                }
+                return;
+            }
+
+            std::cerr << "[NodeRuntime:" << node_id_
+                      << "] ReportObjectCreated attempt " << attempt << "/"
+                      << kMaxAttempts << " FAILED"
+                      << " object=" << object_id
+                      << " code=" << status.error_code()
+                      << " msg=" << status.error_message() << "\n" << std::flush;
+
+            if (attempt < kMaxAttempts) {
+                std::this_thread::sleep_for(backoff);
+                backoff *= 2;
+            }
+        }
+
+        std::cerr << "[NodeRuntime:" << node_id_
+                  << "] CRITICAL: ReportObjectCreated giving up after "
+                  << kMaxAttempts << " attempts. object=" << object_id
+                  << " — head will not learn of this completion. "
+                  << "Downstream tasks depending on this object may stall "
+                  << "until the dep-timeout sweep reaps them.\n" << std::flush;
     }
 
 } // namespace orion::distributed
