@@ -170,7 +170,7 @@ node_asan:
 # Clean
 # ─────────────────────────────────────────────
 clean:
-	rm -f $(SRC)/**/*.o $(SRC)/**/*.d $(SRC)/*.o $(SRC)/*.d benchmarks/*.o benchmarks/*.d tests/*.o tests/*.d *.o *.d main head node submit_test submit_benchmark test_project_benchmark universal_builder build_test build_cluster_test build_complex_test 2>/dev/null || true
+	rm -f $(SRC)/**/*.o $(SRC)/**/**/*.o $(SRC)/**/**/*.d $(SRC)/**/*.d $(SRC)/*.o $(SRC)/*.d benchmarks/*.o benchmarks/*.d tests/*.o tests/*.d *.o *.d main head node submit_test submit_benchmark test_project_benchmark universal_builder build_test build_cluster_test build_complex_test 2>/dev/null || true
 
 .PHONY: main head node submit_test submit_benchmark test_project_benchmark build_test build_cluster_test build_complex_test clean \
 	main_debug head_debug node_debug \
