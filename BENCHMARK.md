@@ -64,3 +64,23 @@ make head node universal_builder
 ./node 50050 6001 node-1  # Repeat for node-2, node-3, node-4
 ./benchmarks/compiler_wide_dag 50050
 ```
+
+---
+
+## 🛡️ Reliability Notes (Phase 4.5 Hardening Pass)
+
+These benchmarks measure the happy path. A separate hardening pass (documented in `challenges.md` §10-14 and `story.md`) fixed five latent liveness/data-loss bugs that the benchmark harness was not exercising:
+
+1. **Bounded retries on `ReportObjectCreated`** (5 attempts, exp. backoff, 3 s deadline each) so a dropped completion RPC no longer deadlocks the subgraph.
+2. **`NodeClient::submit_task` now returns `bool`** — failed dispatches are rolled back and re-queued instead of becoming ghost `in_flight_` entries.
+3. **`in_flight_` hard-timeout reaper** (default 120 s) so node crashes can't leak scheduler slots.
+4. **Per-task dependency-wait timeout** (default 60 s) + `failed_objects_` propagation so a dead upstream fails its subgraph fast.
+5. **SHA-256 canonical-hash comparison** between the first completer and any speculative clone — mismatches log `!!! INTEGRITY MISMATCH !!!` and the clone's value is rejected.
+
+Expect no measurable change to the existing speedup numbers. The value is in *what doesn't happen*: no silent stalls, no zombie tasks, no "I swear I saw this complete" ghost artifacts.
+
+### Suggested follow-up benchmarks (not yet run)
+
+- **Node-kill chaos test**: `kill -9` a worker mid-build; measure time-to-failure vs. time-to-recovery (should now be bounded by `in_flight_hard_timeout_`).
+- **Network-partition test**: block head↔node port mid-task; confirm `ReportObjectCreated` retries succeed on reconnect and `check_dependency_timeouts()` fails the task cleanly if the partition persists past the timeout.
+- **Byzantine worker test**: force one node to return a deliberately corrupted artifact; verify the integrity-mismatch path logs correctly and the original value is retained.

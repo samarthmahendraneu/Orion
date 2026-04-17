@@ -330,6 +330,16 @@ CXX=g++ make
 
 ## Current Status
 
+#### Phase 4.5 — Reliability Hardening Pass (this revision)
+
+A post-audit pass closed five latent data-loss / liveness bugs. These are documented in detail in `challenges.md` (items 10–14) and touch only `src/`:
+
+- **`ReportObjectCreated` no longer silently drops completions.** The worker now sets an RPC deadline and retries the "call-home" up to 5 times with exponential backoff; only then does it log a `CRITICAL` line. Previously the `grpc::Status` was discarded, so a lost completion RPC would permanently hang every downstream task.  *(File: `src/distributed/node_runtime.cpp`.)*
+- **`GrpcNodeClient::submit_task` stops pretending to succeed.** The `NodeClient` interface now returns `bool`; a null stub, failed RPC, or server rejection surfaces the failure to the `ClusterScheduler`, which rolls back the in-flight entry and re-queues the task on another node. The cached stub is also dropped on transport failure so the next retry re-opens the channel.  *(Files: `src/distributed/rpc/node_client.h`, `grpc_node_client.h`, `inprocess_node_client.h`.)*
+- **`in_flight_` map can no longer leak.** Stale entries whose node died (or whose completion RPC was lost forever) are now reaped by a hard timeout sweep in the background monitor thread. Rolled-back dispatches are also removed immediately.  *(File: `src/distributed/cluster/cluster_scheduler.cpp`.)*
+- **Dependency-wait deadlock eliminated.** Every task has a `submit_time_`; if its deps haven't materialised within `dep_timeout_`, the task is marked as permanently failed. A `failed_objects_` set propagates the failure down the DAG so the entire subgraph fails fast instead of waiting forever.  *(Same file.)*
+- **SHA-256 verification is now actually enforced.** The first completer's hash is recorded as the canonical hash; every speculative clone's hash is compared against it, and a mismatch produces a loud `!!! INTEGRITY MISMATCH !!!` log without overwriting the trusted value.  *(Same file, and `head_main.cpp` already passes the hash through.)*
+
 #### Phase 1 — Core Engine & Local Runtime
 - **The Issue**: Sequential build scripts fail to utilize multi-core hardware and manual dependency management is fragile.
 - **The Solution**: **Dataflow DAG Scheduler**. Built a thread-safe task engine that automatically resolves dependencies and dispatches ready tasks to a worker pool.
@@ -350,7 +360,8 @@ CXX=g++ make
 - [x] Real RPC transport (gRPC) replacing `InProcessNodeClient`
 - [x] Node-reported object location confirmations (ReportObjectCreated)
 - [x] Heartbeat-based node liveness 
-- [ ] Task failure handling and retry with configurable policies
+- [x] Task failure handling and retry (dispatch rollback + bounded `ReportObjectCreated` retries + dep-wait timeout + in-flight hard timeout) — see Phase 4.5 hardening pass
+- [ ] Task failure handling with fully configurable policies (per-task retry budgets, jittered backoff, DLQ)
 - [ ] Work-stealing across nodes
 
 #### Phase 3 — Ad-hoc Distributed Data Computation
