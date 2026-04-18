@@ -2,9 +2,11 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <functional>
 #include <any>
 
+#include "../distributed/observability/telemetry.h"
 #include "object_ref.h"
 
 namespace orion {
@@ -14,6 +16,12 @@ namespace orion {
         std::string function_name;       // wire-safe name; looked up in FunctionRegistry on remote nodes
         std::vector<std::string> args;   // serialized literal args (4-byte LE ints for now); forwarded to nodes
         std::vector<ObjectRef> deps;
+        
+        // V2: Content-addressed dependencies (Filename -> Hash)
+        std::map<std::string, std::string> input_map;
+
+        // Trace context (lineage)
+        observability::TraceContext trace_context;
 
         Task() = default;   // 👈 allows `Task task;`
 

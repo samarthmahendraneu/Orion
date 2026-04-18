@@ -55,7 +55,10 @@ namespace orion::distributed {
                 if (args.empty()) return 0;
                 // The command string is packed into the first argument as a raw string
                 std::string command = std::any_cast<std::string>(args[0]);
-                
+
+                // Debug: log first 120 chars of command to help diagnose working_dir issues
+                std::cerr << "[shell_execute] CMD: " << command.substr(0, 120) << "\n" << std::flush;
+
                 // Execute the command
                 int ret = std::system(command.c_str());
                 return (ret == 0) ? 1 : 0;
