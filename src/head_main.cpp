@@ -343,8 +343,9 @@ int main(int argc, char* argv[]) {
     if (!http.start()) {
         LOG_WARN("ClusterHead", "http_bind_failed",
                  {"port", std::to_string(metrics_port)});
-    } else {
-        // Initialize OTLP Exporter.
+    }
+
+    // Initialize OTLP Exporter.
     std::string otel_collector = "otel-collector"; // Default k8s service name
     const char* otel_env = std::getenv("OTEL_COLLECTOR_HOST");
     if (otel_env) otel_collector = otel_env;
@@ -354,12 +355,22 @@ int main(int argc, char* argv[]) {
              {"port", port},
              {"metrics_port", std::to_string(metrics_port)},
              {"otel_collector", otel_collector});
-    }
+
+    std::atomic<bool> running{true};
+
+    // ── Metrics-push thread ──────────────────────────────────────────────────
+    std::thread metrics_worker([&] {
+        while (running.load()) {
+            orion::observability::counters::node_online().inc();
+            exporter.export_metrics(orion::observability::Metrics::instance().snapshot(),
+                                   {{"node_id", "head"}});
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    });
 
     // ── Cancel-dispatcher thread ─────────────────────────────────────────────
     // The scheduler queues speculative-loser cancels; we drain them in a
     // background thread so the scheduler never blocks on RPC.
-    std::atomic<bool> running{true};
     std::thread cancel_worker([&] {
         while (running.load()) {
             auto pending = scheduler.take_pending_cancels();
@@ -372,6 +383,7 @@ int main(int argc, char* argv[]) {
 
     server->Wait();
     running.store(false);
+    metrics_worker.join();
     cancel_worker.join();
     http.stop();
     return 0;

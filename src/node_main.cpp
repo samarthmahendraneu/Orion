@@ -29,6 +29,7 @@
 #include "distributed/observability/logger.h"
 #include "distributed/observability/telemetry.h"
 #include "distributed/observability/otlp_exporter.h"
+#include "distributed/observability/metrics.h"
 
 static std::atomic<bool> g_running{true};
 static std::unique_ptr<grpc::Server> g_grpc_server;
@@ -95,6 +96,16 @@ int main(int argc, char* argv[]) {
     std::cout << "[Node:" << node_id << "] NodeService listening on "
               << listen_address << "\n" << std::flush;
 
+    // ── Metrics-push thread ──────────────────────────────────────────────────
+    std::thread metrics_worker([&] {
+        while (g_running.load()) {
+            orion::observability::counters::node_online().inc();
+            exporter.export_metrics(orion::observability::Metrics::instance().snapshot(),
+                                   {{"node_id", node_id}});
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    });
+
     std::signal(SIGINT, [](int) {
         g_running = false;
         if (g_grpc_server) g_grpc_server->Shutdown();
@@ -107,6 +118,7 @@ int main(int argc, char* argv[]) {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
+    metrics_worker.join();
     g_grpc_server->Shutdown();
     node.stop();
     return 0;

@@ -91,25 +91,24 @@ public:
             ctx.trace_id = parent->trace_id;
             ctx.parent_span_id = parent->span_id;
         } else {
-            ctx.trace_id = generate_id(16); // 128-bit trace ID (32 hex chars)
+            ctx.trace_id = generate_id(32); // 128-bit trace ID
         }
-        ctx.span_id = generate_id(8); // 64-bit span ID (16 hex chars)
+        ctx.span_id = generate_id(16); // 64-bit span ID
 
         auto span = std::make_shared<Span>(name, std::move(ctx), component);
         return span;
     }
 
     // ID generation helper
-    std::string generate_id(size_t bytes) {
-        static thread_local std::mt19937_64 gen(std::random_device{}());
-        std::uniform_int_distribution<uint64_t> dist;
-        std::ostringstream ss;
-        ss << std::hex << std::setfill('0');
-        for (size_t i = 0; i < (bytes + 7) / 8; ++i) {
-            ss << std::setw(16) << dist(gen);
-        }
-        std::string s = ss.str();
-        return s.substr(0, bytes * 2);
+    static std::string generate_id(int length) {
+        static thread_local std::mt19937 gen(std::random_device{}());
+        std::uniform_int_distribution<> dis(0, 15);
+        std::stringstream ss;
+        if (length == 32) ss << "tr-";
+        else if (length == 16) ss << "sp-";
+        
+        for (int i = 0; i < length; ++i) ss << std::hex << dis(gen);
+        return ss.str();
     }
 
     // Callback for exported spans (wired to OTLP exporter later)

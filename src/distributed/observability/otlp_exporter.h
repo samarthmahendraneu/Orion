@@ -19,6 +19,7 @@
 
 #include "telemetry.h"
 #include "logger.h"
+#include "metrics.h"
 
 namespace orion::observability {
 
@@ -33,6 +34,12 @@ public:
         });
 
         worker_ = std::thread([this] { worker_loop(); });
+    }
+
+    void export_metrics(const std::vector<Metrics::MetricPoint>& snapshot,
+                        const std::unordered_map<std::string, std::string>& global_attributes = {}) {
+        std::string json = format_metrics_json(snapshot, global_attributes);
+        send_post("/v1/metrics", json);
     }
 
     ~OtlpExporter() {
@@ -70,9 +77,7 @@ private:
         }
     }
 
-    void send_batch(const std::vector<SpanData>& batch) {
-        std::string json = format_otlp_json(batch);
-        
+    void send_post(const std::string& path, const std::string& json) {
         // Simple raw-socket POST.
         int fd = ::socket(AF_INET, SOCK_STREAM, 0);
         if (fd < 0) return;
@@ -95,7 +100,7 @@ private:
         }
 
         std::ostringstream ss;
-        ss << "POST /v1/traces HTTP/1.1\r\n"
+        ss << "POST " << path << " HTTP/1.1\r\n"
            << "Host: " << host_ << "\r\n"
            << "Content-Type: application/json\r\n"
            << "Content-Length: " << json.size() << "\r\n"
@@ -110,6 +115,11 @@ private:
         ::recv(fd, buf, sizeof(buf), 0);
         
         ::close(fd);
+    }
+
+    void send_batch(const std::vector<SpanData>& batch) {
+        std::string json = format_otlp_json(batch);
+        send_post("/v1/traces", json);
     }
 
     std::string format_otlp_json(const std::vector<SpanData>& batch) {
@@ -141,6 +151,52 @@ private:
             os << "{\"key\": \"component\", \"value\": {\"stringValue\": \"" << s.component << "\"}}";
             
             os << "]}";
+        }
+
+        os << "]}]}]}";
+        return os.str();
+    }
+
+    std::string format_metrics_json(const std::vector<Metrics::MetricPoint>& batch,
+                                   const std::unordered_map<std::string, std::string>& global_attributes) {
+        std::ostringstream os;
+        auto now_ns = std::to_string(to_nano(std::chrono::system_clock::now()));
+
+        os << "{\"resourceMetrics\": [{ \"resource\": { \"attributes\": ["
+           << "{\"key\": \"service.name\", \"value\": {\"stringValue\": \"orion\"}}";
+        
+        for (const auto& [k, v] : global_attributes) {
+            os << ",{\"key\": \"" << k << "\", \"value\": {\"stringValue\": \"" << v << "\"}}";
+        }
+           
+        os << "]}, \"scopeMetrics\": [{ \"metrics\": [";
+
+        for (size_t i = 0; i < batch.size(); ++i) {
+            if (i > 0) os << ",";
+            os << "{"
+               << "\"name\": \"" << batch[i].name << "\","
+               << "\"sum\": { \"dataPoints\": [{"
+               << "\"asInt\": \"" << batch[i].value << "\","
+               << "\"timeUnixNano\": \"" << now_ns << "\","
+               << "\"attributes\": [";
+
+            bool first_attr = true;
+            // Add Point-specific labels
+            for (const auto& [k, v] : batch[i].labels) {
+                if (!first_attr) os << ",";
+                os << "{\"key\": \"" << k << "\", \"value\": {\"stringValue\": \"" << v << "\"}}";
+                first_attr = false;
+            }
+            // Add Global labels (like node_id) to the point
+            for (const auto& [k, v] : global_attributes) {
+                if (!first_attr) os << ",";
+                os << "{\"key\": \"" << k << "\", \"value\": {\"stringValue\": \"" << v << "\"}}";
+                first_attr = false;
+            }
+
+            os << "] }"; // end datapoint
+            os << "], \"isMonotonic\": true, \"aggregationTemporality\": 1 }"
+               << "}";
         }
 
         os << "]}]}]}";

@@ -31,29 +31,29 @@ data:
     exporters:
       prometheus:
         endpoint: "0.0.0.0:8889"
-      logging:
+      debug:
         verbosity: normal
       otlp/tempo:
         endpoint: tempo:4317
         tls:
           insecure: true
-      loki:
-        endpoint: "http://loki:3100/loki/api/v1/push"
+      otlphttp/loki:
+        endpoint: "http://loki:3100/otlp"
 
     service:
       pipelines:
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlp/tempo, logging]
+          exporters: [otlp/tempo, debug]
         metrics:
           receivers: [otlp]
           processors: [batch]
-          exporters: [prometheus, logging]
+          exporters: [prometheus, debug]
         logs:
           receivers: [otlp]
           processors: [batch]
-          exporters: [loki, logging]
+          exporters: [otlphttp/loki, debug]
 
 ---
 apiVersion: apps/v1
@@ -222,6 +222,29 @@ spec:
     targetPort: 3100
   selector:
     app: loki
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: observability
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus:9090
+        isDefault: true
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki:3100
+      - name: Tempo
+        type: tempo
+        access: proxy
+        url: http://tempo:3200
 
 ---
 # 4. Grafana (Dashboard)
@@ -250,6 +273,94 @@ spec:
           value: "true"
         - name: GF_AUTH_ANONYMOUS_ORG_ROLE
           value: "Admin"
+        volumeMounts:
+        - name: grafana-datasources
+          mountPath: /etc/grafana/provisioning/datasources
+        - name: grafana-dashboards-config
+          mountPath: /etc/grafana/provisioning/dashboards
+        - name: grafana-dashboards-json
+          mountPath: /var/lib/grafana-dashboards
+        - name: grafana-storage
+          mountPath: /var/lib/grafana
+      volumes:
+      - name: grafana-datasources
+        configMap:
+          name: grafana-datasources
+      - name: grafana-dashboards-config
+        configMap:
+          name: grafana-dashboards-config
+      - name: grafana-dashboards-json
+        configMap:
+          name: grafana-dashboards-json
+      - name: grafana-storage
+        persistentVolumeClaim:
+          claimName: grafana-pvc
+
+---
+# 5. Prometheus (Storage / TSDB)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: observability
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 5s
+    scrape_configs:
+      - job_name: 'otel-collector'
+        static_configs:
+          - targets: ['otel-collector:8889']
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+      - name: prometheus
+        image: prom/prometheus:latest
+        args:
+          - "--config.file=/etc/prometheus/prometheus.yml"
+          - "--storage.tsdb.path=/prometheus"
+        ports:
+        - containerPort: 9090
+        volumeMounts:
+        - name: prometheus-config
+          mountPath: /etc/prometheus
+        - name: prometheus-storage
+          mountPath: /prometheus
+      volumes:
+      - name: prometheus-config
+        configMap:
+          name: prometheus-config
+      - name: prometheus-storage
+        persistentVolumeClaim:
+          claimName: prometheus-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: observability
+spec:
+  ports:
+  - port: 9090
+    targetPort: 9090
+  selector:
+    app: prometheus
 
 ---
 apiVersion: v1
@@ -263,3 +374,90 @@ spec:
     targetPort: 3000
   selector:
     app: grafana
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-pvc
+  namespace: observability
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-pvc
+  namespace: observability
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-config
+  namespace: observability
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: 'Orion'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 10
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana-dashboards
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-json
+  namespace: observability
+data:
+  orion-dashboard.json: |
+    {
+      "id": null,
+      "title": "Orion Cluster Dashboard (v2)",
+      "tags": ["orion", "production"],
+      "timezone": "browser",
+      "refresh": "5s",
+      "time": { "from": "now-15m", "to": "now" },
+      "panels": [
+        {
+          "title": "Build Activities",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "targets": [
+            { "expr": "increase(orion_tasks_submitted_total[5m])", "legendFormat": "Submitted" },
+            { "expr": "increase(orion_tasks_completed_total[5m])", "legendFormat": "Completed" }
+          ]
+        },
+        {
+          "title": "Cache Efficiency",
+          "type": "gauge",
+          "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 },
+          "targets": [{ "expr": "sum(increase(orion_tasks_completed_total[10m])) / sum(increase(orion_tasks_submitted_total[10m])) * 100" }],
+          "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+        },
+        {
+          "title": "Node Status",
+          "type": "stat",
+          "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
+          "targets": [{ "expr": "count(orion_node_online_total)" }]
+        }
+      ]
+    }

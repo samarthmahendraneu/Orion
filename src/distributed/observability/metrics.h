@@ -96,6 +96,22 @@ public:
         return os.str();
     }
 
+    struct MetricPoint {
+        std::string name;
+        std::unordered_map<std::string, std::string> labels;
+        uint64_t value;
+    };
+
+    // Take a point-in-time snapshot of all counters
+    std::vector<MetricPoint> snapshot() const {
+        std::lock_guard<std::mutex> lock(mu_);
+        std::vector<MetricPoint> s;
+        for (const auto& [name, c] : counters_) {
+            s.push_back({name, {}, c->value()});
+        }
+        return s;
+    }
+
     // Cheap JSON for the /cluster endpoint.
     std::string render_json() const {
         std::lock_guard<std::mutex> lock(mu_);
@@ -178,6 +194,10 @@ namespace counters {
     inline Counter& cancels_sent() {
         return Metrics::instance().counter("orion_cancels_sent_total",
             "CancelTask RPCs sent by the head");
+    }
+    inline Counter& node_online() {
+        return Metrics::instance().counter("orion_node_online_total",
+            "Periodic heartbeat sentinel from an active worker node");
     }
 } // namespace counters
 
