@@ -27,6 +27,8 @@ static const char* ClusterHead_method_names[] = {
   "/orion.ClusterHead/SubmitTask",
   "/orion.ClusterHead/ReportObjectCreated",
   "/orion.ClusterHead/GetObjectLocation",
+  "/orion.ClusterHead/WhoIsLeader",
+  "/orion.ClusterHead/Heartbeat",
 };
 
 std::unique_ptr< ClusterHead::Stub> ClusterHead::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
@@ -40,6 +42,8 @@ ClusterHead::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channe
   , rpcmethod_SubmitTask_(ClusterHead_method_names[1], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_ReportObjectCreated_(ClusterHead_method_names[2], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_GetObjectLocation_(ClusterHead_method_names[3], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_WhoIsLeader_(ClusterHead_method_names[4], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_Heartbeat_(ClusterHead_method_names[5], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
 ::grpc::Status ClusterHead::Stub::RegisterNode(::grpc::ClientContext* context, const ::orion::RegisterNodeRequest& request, ::orion::RegisterNodeReply* response) {
@@ -134,6 +138,52 @@ void ClusterHead::Stub::async::GetObjectLocation(::grpc::ClientContext* context,
   return result;
 }
 
+::grpc::Status ClusterHead::Stub::WhoIsLeader(::grpc::ClientContext* context, const ::orion::Empty& request, ::orion::WhoIsLeaderReply* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::orion::Empty, ::orion::WhoIsLeaderReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_WhoIsLeader_, context, request, response);
+}
+
+void ClusterHead::Stub::async::WhoIsLeader(::grpc::ClientContext* context, const ::orion::Empty* request, ::orion::WhoIsLeaderReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::orion::Empty, ::orion::WhoIsLeaderReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_WhoIsLeader_, context, request, response, std::move(f));
+}
+
+void ClusterHead::Stub::async::WhoIsLeader(::grpc::ClientContext* context, const ::orion::Empty* request, ::orion::WhoIsLeaderReply* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_WhoIsLeader_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::orion::WhoIsLeaderReply>* ClusterHead::Stub::PrepareAsyncWhoIsLeaderRaw(::grpc::ClientContext* context, const ::orion::Empty& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::orion::WhoIsLeaderReply, ::orion::Empty, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_WhoIsLeader_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::orion::WhoIsLeaderReply>* ClusterHead::Stub::AsyncWhoIsLeaderRaw(::grpc::ClientContext* context, const ::orion::Empty& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncWhoIsLeaderRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
+
+::grpc::Status ClusterHead::Stub::Heartbeat(::grpc::ClientContext* context, const ::orion::HeartbeatRequest& request, ::orion::HeartbeatReply* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::orion::HeartbeatRequest, ::orion::HeartbeatReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_Heartbeat_, context, request, response);
+}
+
+void ClusterHead::Stub::async::Heartbeat(::grpc::ClientContext* context, const ::orion::HeartbeatRequest* request, ::orion::HeartbeatReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::orion::HeartbeatRequest, ::orion::HeartbeatReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_Heartbeat_, context, request, response, std::move(f));
+}
+
+void ClusterHead::Stub::async::Heartbeat(::grpc::ClientContext* context, const ::orion::HeartbeatRequest* request, ::orion::HeartbeatReply* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_Heartbeat_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::orion::HeartbeatReply>* ClusterHead::Stub::PrepareAsyncHeartbeatRaw(::grpc::ClientContext* context, const ::orion::HeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::orion::HeartbeatReply, ::orion::HeartbeatRequest, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_Heartbeat_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::orion::HeartbeatReply>* ClusterHead::Stub::AsyncHeartbeatRaw(::grpc::ClientContext* context, const ::orion::HeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncHeartbeatRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
+
 ClusterHead::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       ClusterHead_method_names[0],
@@ -175,6 +225,26 @@ ClusterHead::Service::Service() {
              ::orion::ObjectLocationReply* resp) {
                return service->GetObjectLocation(ctx, req, resp);
              }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      ClusterHead_method_names[4],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< ClusterHead::Service, ::orion::Empty, ::orion::WhoIsLeaderReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](ClusterHead::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::orion::Empty* req,
+             ::orion::WhoIsLeaderReply* resp) {
+               return service->WhoIsLeader(ctx, req, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      ClusterHead_method_names[5],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< ClusterHead::Service, ::orion::HeartbeatRequest, ::orion::HeartbeatReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](ClusterHead::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::orion::HeartbeatRequest* req,
+             ::orion::HeartbeatReply* resp) {
+               return service->Heartbeat(ctx, req, resp);
+             }, this)));
 }
 
 ClusterHead::Service::~Service() {
@@ -208,10 +278,128 @@ ClusterHead::Service::~Service() {
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
+::grpc::Status ClusterHead::Service::WhoIsLeader(::grpc::ServerContext* context, const ::orion::Empty* request, ::orion::WhoIsLeaderReply* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status ClusterHead::Service::Heartbeat(::grpc::ServerContext* context, const ::orion::HeartbeatRequest* request, ::orion::HeartbeatReply* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+
+static const char* RaftService_method_names[] = {
+  "/orion.RaftService/RequestVote",
+  "/orion.RaftService/AppendEntries",
+};
+
+std::unique_ptr< RaftService::Stub> RaftService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
+  (void)options;
+  std::unique_ptr< RaftService::Stub> stub(new RaftService::Stub(channel, options));
+  return stub;
+}
+
+RaftService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options)
+  : channel_(channel), rpcmethod_RequestVote_(RaftService_method_names[0], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_AppendEntries_(RaftService_method_names[1], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  {}
+
+::grpc::Status RaftService::Stub::RequestVote(::grpc::ClientContext* context, const ::orion::VoteRequest& request, ::orion::VoteReply* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::orion::VoteRequest, ::orion::VoteReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_RequestVote_, context, request, response);
+}
+
+void RaftService::Stub::async::RequestVote(::grpc::ClientContext* context, const ::orion::VoteRequest* request, ::orion::VoteReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::orion::VoteRequest, ::orion::VoteReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_RequestVote_, context, request, response, std::move(f));
+}
+
+void RaftService::Stub::async::RequestVote(::grpc::ClientContext* context, const ::orion::VoteRequest* request, ::orion::VoteReply* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_RequestVote_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::orion::VoteReply>* RaftService::Stub::PrepareAsyncRequestVoteRaw(::grpc::ClientContext* context, const ::orion::VoteRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::orion::VoteReply, ::orion::VoteRequest, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_RequestVote_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::orion::VoteReply>* RaftService::Stub::AsyncRequestVoteRaw(::grpc::ClientContext* context, const ::orion::VoteRequest& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncRequestVoteRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
+
+::grpc::Status RaftService::Stub::AppendEntries(::grpc::ClientContext* context, const ::orion::AppendEntriesRequest& request, ::orion::AppendEntriesReply* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::orion::AppendEntriesRequest, ::orion::AppendEntriesReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_AppendEntries_, context, request, response);
+}
+
+void RaftService::Stub::async::AppendEntries(::grpc::ClientContext* context, const ::orion::AppendEntriesRequest* request, ::orion::AppendEntriesReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::orion::AppendEntriesRequest, ::orion::AppendEntriesReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_AppendEntries_, context, request, response, std::move(f));
+}
+
+void RaftService::Stub::async::AppendEntries(::grpc::ClientContext* context, const ::orion::AppendEntriesRequest* request, ::orion::AppendEntriesReply* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_AppendEntries_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::orion::AppendEntriesReply>* RaftService::Stub::PrepareAsyncAppendEntriesRaw(::grpc::ClientContext* context, const ::orion::AppendEntriesRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::orion::AppendEntriesReply, ::orion::AppendEntriesRequest, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_AppendEntries_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::orion::AppendEntriesReply>* RaftService::Stub::AsyncAppendEntriesRaw(::grpc::ClientContext* context, const ::orion::AppendEntriesRequest& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncAppendEntriesRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
+
+RaftService::Service::Service() {
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      RaftService_method_names[0],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< RaftService::Service, ::orion::VoteRequest, ::orion::VoteReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](RaftService::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::orion::VoteRequest* req,
+             ::orion::VoteReply* resp) {
+               return service->RequestVote(ctx, req, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      RaftService_method_names[1],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< RaftService::Service, ::orion::AppendEntriesRequest, ::orion::AppendEntriesReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](RaftService::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::orion::AppendEntriesRequest* req,
+             ::orion::AppendEntriesReply* resp) {
+               return service->AppendEntries(ctx, req, resp);
+             }, this)));
+}
+
+RaftService::Service::~Service() {
+}
+
+::grpc::Status RaftService::Service::RequestVote(::grpc::ServerContext* context, const ::orion::VoteRequest* request, ::orion::VoteReply* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status RaftService::Service::AppendEntries(::grpc::ServerContext* context, const ::orion::AppendEntriesRequest* request, ::orion::AppendEntriesReply* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
 
 static const char* NodeService_method_names[] = {
   "/orion.NodeService/ExecuteTask",
   "/orion.NodeService/GetObject",
+  "/orion.NodeService/CancelTask",
 };
 
 std::unique_ptr< NodeService::Stub> NodeService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
@@ -223,6 +411,7 @@ std::unique_ptr< NodeService::Stub> NodeService::NewStub(const std::shared_ptr< 
 NodeService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options)
   : channel_(channel), rpcmethod_ExecuteTask_(NodeService_method_names[0], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_GetObject_(NodeService_method_names[1], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_CancelTask_(NodeService_method_names[2], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
 ::grpc::Status NodeService::Stub::ExecuteTask(::grpc::ClientContext* context, const ::orion::TaskRequest& request, ::orion::TaskReply* response) {
@@ -271,6 +460,29 @@ void NodeService::Stub::async::GetObject(::grpc::ClientContext* context, const :
   return result;
 }
 
+::grpc::Status NodeService::Stub::CancelTask(::grpc::ClientContext* context, const ::orion::CancelRequest& request, ::orion::CancelReply* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::orion::CancelRequest, ::orion::CancelReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_CancelTask_, context, request, response);
+}
+
+void NodeService::Stub::async::CancelTask(::grpc::ClientContext* context, const ::orion::CancelRequest* request, ::orion::CancelReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::orion::CancelRequest, ::orion::CancelReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_CancelTask_, context, request, response, std::move(f));
+}
+
+void NodeService::Stub::async::CancelTask(::grpc::ClientContext* context, const ::orion::CancelRequest* request, ::orion::CancelReply* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_CancelTask_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::orion::CancelReply>* NodeService::Stub::PrepareAsyncCancelTaskRaw(::grpc::ClientContext* context, const ::orion::CancelRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::orion::CancelReply, ::orion::CancelRequest, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_CancelTask_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::orion::CancelReply>* NodeService::Stub::AsyncCancelTaskRaw(::grpc::ClientContext* context, const ::orion::CancelRequest& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncCancelTaskRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
+
 NodeService::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       NodeService_method_names[0],
@@ -292,6 +504,16 @@ NodeService::Service::Service() {
              ::orion::ObjectData* resp) {
                return service->GetObject(ctx, req, resp);
              }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      NodeService_method_names[2],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< NodeService::Service, ::orion::CancelRequest, ::orion::CancelReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](NodeService::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::orion::CancelRequest* req,
+             ::orion::CancelReply* resp) {
+               return service->CancelTask(ctx, req, resp);
+             }, this)));
 }
 
 NodeService::Service::~Service() {
@@ -305,6 +527,13 @@ NodeService::Service::~Service() {
 }
 
 ::grpc::Status NodeService::Service::GetObject(::grpc::ServerContext* context, const ::orion::ObjectLocationRequest* request, ::orion::ObjectData* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status NodeService::Service::CancelTask(::grpc::ServerContext* context, const ::orion::CancelRequest* request, ::orion::CancelReply* response) {
   (void) context;
   (void) request;
   (void) response;

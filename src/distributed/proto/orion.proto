@@ -7,11 +7,36 @@ service ClusterHead {
   rpc SubmitTask(TaskRequest) returns (TaskReply);
   rpc ReportObjectCreated(ObjectReport) returns (Empty);
   rpc GetObjectLocation(ObjectLocationRequest) returns (ObjectLocationReply);
+
+  // Raft phase-1:
+  //   Clients call WhoIsLeader to discover the current authoritative head.
+  rpc WhoIsLeader(Empty) returns (WhoIsLeaderReply);
+
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatReply);
+}
+
+// Distributed CAS service for artifacts and logs.
+service CasService {
+  rpc FetchBlob(BlobRequest) returns (stream BlobChunk);
+  rpc UploadBlob(stream BlobChunk) returns (BlobReply);
+}
+
+// Inter-replica communication for the Raft group.
+service RaftService {
+  rpc RequestVote(VoteRequest) returns (VoteReply);
+  rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesReply);
 }
 
 service NodeService {
   rpc ExecuteTask(TaskRequest) returns (TaskReply);
   rpc GetObject(ObjectLocationRequest) returns (ObjectData);
+
+  // Resilience phase-1:
+  //   When a speculative clone wins, the scheduler calls CancelTask on the
+  //   losing node so it doesn't keep burning CPU, IO, and disk on a result
+  //   that will be discarded. Workers SHOULD kill the subprocess and release
+  //   any temp files. Best-effort — the head does not wait for success.
+  rpc CancelTask(CancelRequest) returns (CancelReply);
 }
 
 message RegisterNodeRequest {
@@ -21,6 +46,7 @@ message RegisterNodeRequest {
 
 message RegisterNodeReply {
   bool success = 1;
+  string leader_address = 2;
 }
 
 message TaskRequest {
@@ -29,12 +55,38 @@ message TaskRequest {
   string function_name = 3;
   repeated bytes args = 4;
   string expected_hash = 5;
+  string working_dir = 6;
+  
+  // V2: Content-addressed dependencies (Filename -> Hash)
+  reserved 7;
+  map<string, string> input_map = 8;
+}
+
+message BlobRequest {
+  string hash = 1;
+}
+
+message BlobChunk {
+  string hash = 1;
+  bytes data = 2;
+  int64 offset = 3;
+  int64 total_size = 4;
+}
+
+message BlobReply {
+  string hash = 1;
+  bool success = 2;
+  string error_message = 3;
 }
 
 message TaskReply {
   bool accepted = 1;
   string node_id = 2;
   string output_hash = 3;
+
+  // Raft: if the node receiving the task is not the leader, it provides
+  // the leader's address for redirection.
+  string leader_address = 4;
 }
 
 message ObjectReport {
@@ -58,3 +110,114 @@ message ObjectData {
 }
 
 message Empty {}
+
+message HeartbeatRequest {
+  string node_id = 1;
+  // Coarse health fields so future placement can reason about load.
+  int32 running_tasks = 2;
+  int32 available_workers = 3;
+}
+
+message HeartbeatReply {
+  bool acknowledged = 1;
+  // If the head no longer has this node registered (e.g. we were evicted
+  // for a TTL violation and then came back), it asks us to re-register.
+  bool please_reregister = 2;
+  string leader_address = 3;
+}
+
+message CancelRequest {
+  string task_id = 1;
+  // Free-form reason so worker logs explain why ("speculative-loser",
+  // "upstream-failed", "scheduler-shutdown").
+  string reason = 2;
+}
+
+message CancelReply {
+  // true = we found the task and aborted / dequeued it.
+  // false = we never saw the task, or it was already done.
+  bool cancelled = 1;
+}
+
+// ── Raft Messages ────────────────────────────────────────────────────────────
+
+message WhoIsLeaderReply {
+  string leader_id = 1;
+  string leader_address = 2;
+}
+
+message VoteRequest {
+  int64 term = 1;
+  string candidate_id = 2;
+  int64 last_log_index = 3;
+  int64 last_log_term = 4;
+}
+
+message VoteReply {
+  int64 term = 1;
+  bool vote_granted = 2;
+}
+
+message AppendEntriesRequest {
+  int64 term = 1;
+  string leader_id = 2;
+  int64 prev_log_index = 3;
+  int64 prev_log_term = 4;
+  repeated OrionLogEntry entries = 5;
+  int64 leader_commit = 6;
+}
+
+message AppendEntriesReply {
+  int64 term = 1;
+  bool success = 2;
+  int64 last_log_index = 3;
+}
+
+message OrionLogEntry {
+  int64 term = 1;
+  int64 index = 2;
+  oneof op {
+    TaskSubmitted          submitted     = 3;
+    TaskDispatched         dispatched    = 4;
+    TaskCompleted          completed     = 5;
+    TaskFailed             failed        = 6;
+    TaskCancelled          cancelled     = 7;
+    NodeRegistered         node_registered = 8;
+    NodeEvicted            node_evicted  = 9;
+  }
+}
+
+// Log sub-messages
+message TaskSubmitted {
+  TaskRequest task_req = 1;
+  string action_hash = 2;
+}
+
+message TaskDispatched {
+  string task_id = 1;
+  string node_id = 2;
+}
+
+message TaskCompleted {
+  string task_id = 1;
+  string object_id = 2;
+  string hash = 3;
+}
+
+message TaskFailed {
+  string task_id = 1;
+  string reason = 2;
+}
+
+message TaskCancelled {
+  string task_id = 1;
+}
+
+message NodeRegistered {
+  string node_id = 1;
+  string address = 2;
+}
+
+message NodeEvicted {
+  string node_id = 1;
+}

@@ -11,6 +11,7 @@ Orion models computation as a **dataflow graph**: tasks declare their inputs as 
 | **Core** | Tasks, workers, scheduler, object store — the high-performance engine |
 | **Local** | `Runtime` — a clean façade over the core for single-process use |
 | **Distributed** | `NodeRuntime`, `ClusterScheduler`, `NodeRegistry`, `NodeClient` — gRPC-based cluster orchestration |
+| **V2 Engine** | **Raft Replication**, **Merkle Action Cache**, **Distributed CAS** |
 | **Hardened** | **Speculative Execution** (Straggler Mitigation) & **SHA-256 Integrity Verification** |
 
 ---
@@ -328,17 +329,13 @@ CXX=g++ make
 
 ---
 
-## Current Status
+#### Phase 5 — Orion V2: Production-Grade Reliability (Current)
 
-#### Phase 4.5 — Reliability Hardening Pass (this revision)
+Orion V2 marks the transition from a research prototype to a production-ready build engine. The core architectural change is the move to **Immutable Content-Addressing** and **Raft-based Consensus**.
 
-A post-audit pass closed five latent data-loss / liveness bugs. These are documented in detail in `challenges.md` (items 10–14) and touch only `src/`:
-
-- **`ReportObjectCreated` no longer silently drops completions.** The worker now sets an RPC deadline and retries the "call-home" up to 5 times with exponential backoff; only then does it log a `CRITICAL` line. Previously the `grpc::Status` was discarded, so a lost completion RPC would permanently hang every downstream task.  *(File: `src/distributed/node_runtime.cpp`.)*
-- **`GrpcNodeClient::submit_task` stops pretending to succeed.** The `NodeClient` interface now returns `bool`; a null stub, failed RPC, or server rejection surfaces the failure to the `ClusterScheduler`, which rolls back the in-flight entry and re-queues the task on another node. The cached stub is also dropped on transport failure so the next retry re-opens the channel.  *(Files: `src/distributed/rpc/node_client.h`, `grpc_node_client.h`, `inprocess_node_client.h`.)*
-- **`in_flight_` map can no longer leak.** Stale entries whose node died (or whose completion RPC was lost forever) are now reaped by a hard timeout sweep in the background monitor thread. Rolled-back dispatches are also removed immediately.  *(File: `src/distributed/cluster/cluster_scheduler.cpp`.)*
-- **Dependency-wait deadlock eliminated.** Every task has a `submit_time_`; if its deps haven't materialised within `dep_timeout_`, the task is marked as permanently failed. A `failed_objects_` set propagates the failure down the DAG so the entire subgraph fails fast instead of waiting forever.  *(Same file.)*
-- **SHA-256 verification is now actually enforced.** The first completer's hash is recorded as the canonical hash; every speculative clone's hash is compared against it, and a mismatch produces a loud `!!! INTEGRITY MISMATCH !!!` log without overwriting the trusted value.  *(Same file, and `head_main.cpp` already passes the hash through.)*
+- **Raft High Availability**: The `ClusterHead` is now a 3-replica state machine. Using Raft, the head maintains a linearized log of every task submission and metadata update, ensuring no progress is lost on leader failover.
+- **Merkle Action Cache**: Tasks are no longer identified by random IDs. We compute a `action_hash = SHA-256(function_name || args || sorted(input_hashes))`. This "fingerprint" allows for instant cache recovery; if the hash exists in the `ActionCache`, we skip execution entirely.
+- **P2P Distributed CAS**: Worker nodes no longer depend on the head node for dependency files. They fetch blobs directly from the producing node's `CasStore` via gRPC streaming, eliminating the head's network bottleneck.
 
 #### Phase 1 — Core Engine & Local Runtime
 - **The Issue**: Sequential build scripts fail to utilize multi-core hardware and manual dependency management is fragile.
@@ -352,48 +349,37 @@ A post-audit pass closed five latent data-loss / liveness bugs. These are docume
 - [x] Multi-node dependency-chaining demo in `main.cpp`
 - [x] **Real RPC transport using gRPC** (`head`, `node`, `submit_test` executables)
 
-### In Progress / Planned
-
 #### Phase 2 — gRPC Cluster & Fault Tolerance
-- **The Issue**: Local resources (CPU/RAM) are a hard ceiling for massive builds. Scaling requires moving from shared-memory threads to independent networked processes.
-- **The Solution**: **gRPC Orchestration**. Implemented a Head-to-Worker RPC layer with a centralized `NodeRegistry` and `ReportObjectCreated` callbacks, enabling horizontal scaling.
 - [x] Real RPC transport (gRPC) replacing `InProcessNodeClient`
 - [x] Node-reported object location confirmations (ReportObjectCreated)
-- [x] Heartbeat-based node liveness 
+- [x] Heartbeat-based node liveness (TTL eviction + auto-requeue on dead-node reclaim, Phase 4.6)
 - [x] Task failure handling and retry (dispatch rollback + bounded `ReportObjectCreated` retries + dep-wait timeout + in-flight hard timeout) — see Phase 4.5 hardening pass
-- [ ] Task failure handling with fully configurable policies (per-task retry budgets, jittered backoff, DLQ)
+- [x] Task failure handling with fully configurable policies (per-task retry budgets, jittered backoff, DLQ) — Phase 4.6
+- [x] Speculative cancellation (CancelTask RPC + worker-side abort flag) — Phase 4.6
 - [ ] Work-stealing across nodes
 
-#### Phase 3 — Ad-hoc Distributed Data Computation
-- **The Issue**: The Head is a central bandwidth bottleneck. All task outputs flow from Worker -> Head, and all inputs flow Head -> Worker. For large binaries, the Head's network interface would saturate.
-- **Production Solution**: Implement **P2P CAS (Content Addressable Storage)**. Use a pull-based fetching model (similar to Ray Plasma) where workers fetch dependencies directly from the producing node.
-- [ ] Cross-process object serialization (replace `std::any` with a wire format)
-- [ ] Distributed object store (shared-memory + TCP pull)
-- [ ] Streaming / chunked object support for large datasets
+#### Phase 3 — Distributed Data Computation (V2)
+- [x] Cross-process object serialization (Protobuf wire format)
+- [x] **Distributed CAS** (shared storage + gRPC fetch_blob)
+- [x] Streaming / chunked object support for large datasets
 
-#### Phase 4 — Security & Reliability (Hardening)
-- **The Issue**: Remote workers are "black boxes" that could return corrupted artifacts. Additionally, single slow nodes ("stragglers") can bottleneck the entire build.
-- **The Solution**: **Speculative Execution & SHA-256 Hashing**. Integrated cryptographic verification for all artifacts and a "racing" mechanism to bypass node-level variance.
-- [x] **Speculative Execution**: Heuristic-based straggler detection and task cloning
-- [x] **Poisonous Worker Protection**: SHA-256 content-based integrity verification
-- [x] **Concurrency Hardening**: "Plan-then-Dispatch" scheduler refactor for deadlock-free orchestration
-- [ ] Support for recursive and speculative task patterns in core
-- [ ] `ObjectRef` as a first-class future passable between tasks at runtime
-- [ ] Group / barrier synchronisation primitives
+#### Phase 3.5 — Action Cache (V2)
+- [x] **Merkle Action Hashing**: Command + Input Files + Toolchain hashing
+- [x] **Global Action Cache**: Skip execution on hit
+- [x] Worker-side `GetObject` streaming from CAS
 
-#### Phase 5 — GPU & Heterogeneous Scheduling
-- **The Issue**: Current scheduler assumes all nodes are identical. Scheduling a GPU-heavy task (like a Metal shader) on a CPU-only node leads to immediate failure or massive latency.
-- **Production Solution**: Implement **Resource-Aware Scheduling**. Nodes heartbeat a telemetry vector (CPU/RAM/GPU), and the scheduler performs constraint-based matching (e.g., "Schedule only on M-series GPU").
-- [ ] Resource annotations on `Task` (CPU cores, GPU count, memory)
-- [ ] GPU-aware node selection in `ClusterScheduler`
-- [ ] Mixed CPU + GPU pipeline scheduling
+#### Phase 6 — Global Control Store & High Availability (V2)
+- [x] **Raft Consensus**: 3-replica state-machine for head node metadata
+- [x] Persistent GCS with backing store (PV-based Raft logs)
+- [x] Pub/sub object-ready notifications via state-machine replication
 
-#### Phase 6 — Global Control Store (GCS) & High Availability
-- **The Issue**: The `ClusterHead` is a Single Point of Failure (SPOF) and state is in-memory. If the Head process crashes, the entire build DAG and progress are lost.
-- **Production Solution**: Implement **Raft-based Consensus**. Use a persistent GCS (like Etcd) to mirror cluster state and enable instant Leader election/failover for the Head node.
-- [ ] Centralized GCS process for cluster-wide state (node registry, object table)
-- [ ] Fault-tolerant GCS with persistent backing store
-- [ ] Pub/sub object-ready notifications
+#### Phase 7 — Dashboard & Observability
+- **The Issue**: Distributed builds are "black boxes." Pinpointing which node failed or why a specific module is slow requires manual log-diving across dozens of machines.
+- **Production Solution**: **Distributed Tracing & Heatmaps**. Integrate OpenTelemetry to visualize DAG execution, identify "hotspot" nodes, and analyze critical-path latency in real-time.
+- [ ] REST API exposing cluster state (nodes, tasks, object locations)
+- [ ] Web dashboard: live task graph visualisation
+- [ ] Distributed tracing (task lineage)
+
 
 #### Phase 7 — Dashboard & Observability
 - **The Issue**: Distributed builds are "black boxes." Pinpointing which node failed or why a specific module is slow requires manual log-diving across dozens of machines.

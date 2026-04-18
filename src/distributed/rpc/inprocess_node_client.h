@@ -50,6 +50,18 @@ namespace orion::distributed {
             }
         }
 
+        // Resilience phase-1: in-process tests don't run a NodeService, so
+        // there's no remote worker to cancel. We accept the call, log it,
+        // and return false (== "no-op, not cancelled"). Tests that exercise
+        // speculative-loser logic should use the gRPC client.
+        bool cancel_task(const std::string& node_id,
+                         const std::string& task_id,
+                         const std::string& reason) override {
+            std::cerr << "[InProcessNodeClient] cancel_task (noop) node=" << node_id
+                      << " task=" << task_id << " reason=" << reason << "\n";
+            return false;
+        }
+
     private:
         std::unordered_map<std::string, NodeRuntime*> nodes_;
     };

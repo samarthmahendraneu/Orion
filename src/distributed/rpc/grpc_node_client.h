@@ -17,6 +17,8 @@
 
 #include "node_client.h"
 #include "../cluster/node_registry.h"
+#include "../observability/logger.h"
+#include "../observability/metrics.h"
 
 namespace orion::distributed {
 
@@ -56,6 +58,11 @@ public:
         for (const auto& bytes : task.args) {
             req.add_args(bytes);
         }
+        
+        // V2: Populate input map (Filename -> Hash)
+        for (auto const& [name, hash] : task.input_map) {
+            (*req.mutable_input_map())[name] = hash;
+        }
 
         ::orion::TaskReply reply;
         grpc::ClientContext ctx;
@@ -66,6 +73,7 @@ public:
         grpc::Status status = stub->ExecuteTask(&ctx, req, &reply);
 
         if (status.ok() && reply.accepted()) {
+            registry_.note_contact(node_id);
             std::cout << "[GrpcNodeClient] ExecuteTask(" << task.id
                       << ") accepted by " << node_id << "\n" << std::flush;
             return true;
@@ -84,8 +92,51 @@ public:
         return false;
     }
 
+    // Resilience phase-1: best-effort cancel. We use a short deadline because
+    // the losing-clone CPU waste is bounded — if the node has already moved
+    // on there's nothing useful to do.
+    bool cancel_task(const std::string& node_id,
+                     const std::string& task_id,
+                     const std::string& reason) override
+    {
+        auto* stub = get_or_create_stub(node_id);
+        if (!stub) {
+            LOG_WARN("GrpcNodeClient", "cancel_no_stub",
+                     {"task_id", task_id},
+                     {"node_id", node_id});
+            return false;
+        }
+
+        ::orion::CancelRequest req;
+        req.set_task_id(task_id);
+        req.set_reason(reason);
+
+        ::orion::CancelReply reply;
+        grpc::ClientContext ctx;
+        ctx.set_deadline(std::chrono::system_clock::now() +
+                         std::chrono::seconds(kCancelDeadlineSec));
+
+        grpc::Status status = stub->CancelTask(&ctx, req, &reply);
+        if (!status.ok()) {
+            LOG_WARN("GrpcNodeClient", "cancel_rpc_failed",
+                     {"task_id", task_id},
+                     {"node_id", node_id},
+                     {"code", std::to_string(status.error_code())},
+                     {"msg", status.error_message()});
+            return false;
+        }
+        registry_.note_contact(node_id);
+        LOG_INFO("GrpcNodeClient", "cancel_sent",
+                 {"task_id", task_id},
+                 {"node_id", node_id},
+                 {"reason", reason},
+                 {"cancelled", reply.cancelled() ? "true" : "false"});
+        return reply.cancelled();
+    }
+
 private:
     static constexpr int kExecuteTaskDeadlineSec = 5;
+    static constexpr int kCancelDeadlineSec = 2;
 
     // Returns raw pointer to stub (owned by stubs_ map).
     // Creates a new stub if this node_id hasn't been seen yet.

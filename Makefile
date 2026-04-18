@@ -23,7 +23,7 @@ GEN_DIR := $(SRC)/distributed/generated
 # Use absolute path for Homebrew tools
 PKG_CONFIG := /opt/homebrew/bin/pkg-config
 
-GRPC_INC := $(shell $(PKG_CONFIG) --cflags grpc++ protobuf) -I$(SRC)
+GRPC_INC := $(shell $(PKG_CONFIG) --cflags grpc++ protobuf) -I$(SRC) -I.
 GRPC_LIB := $(shell $(PKG_CONFIG) --libs grpc++ protobuf)
 
 # ─────────────────────────────────────────────
@@ -47,7 +47,8 @@ CORE_SRCS := \
 
 CLUSTER_SRCS := \
 	$(SRC)/distributed/cluster/cluster_scheduler.cpp \
-	$(SRC)/distributed/cluster/node_registry.cpp
+	$(SRC)/distributed/cluster/node_registry.cpp \
+	$(SRC)/distributed/cluster/raft_consensus.cpp
 
 FUNC_SRCS := \
 	$(SRC)/distributed/functions/function_registry.cpp
@@ -61,6 +62,7 @@ SUBMIT_SRCS := benchmarks/simple_task_test.cpp
 SUBMIT_BENCHMARK_SRCS := benchmarks/compiler_wide_dag.cpp
 TEST_PROJECT_BENCHMARK_SRCS := benchmarks/test_project_dag.cpp
 UNIVERSAL_BUILDER_SRCS := benchmarks/universal_cmake_orchestrator.cpp
+CLIENT_SRCS := $(SRC)/client_main.cpp
 
 MAIN_OBJS := $(MAIN_SRCS:.cpp=.o)
 HEAD_OBJS := $(HEAD_SRCS:.cpp=.o)
@@ -69,6 +71,7 @@ SUBMIT_OBJS := $(SUBMIT_SRCS:.cpp=.o)
 SUBMIT_BENCHMARK_OBJS := $(SUBMIT_BENCHMARK_SRCS:.cpp=.o)
 TEST_PROJECT_BENCHMARK_OBJS := $(TEST_PROJECT_BENCHMARK_SRCS:.cpp=.o)
 UNIVERSAL_BUILDER_OBJS := $(UNIVERSAL_BUILDER_SRCS:.cpp=.o)
+CLIENT_OBJS := $(CLIENT_SRCS:.cpp=.o)
 
 BUILD_ENGINE_SRCS :=
 
@@ -120,6 +123,9 @@ test_project_benchmark: $(TEST_PROJECT_BENCHMARK_OBJS) $(GEN_OBJS)
 universal_builder: $(UNIVERSAL_BUILDER_OBJS) $(GEN_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o universal_builder
 
+orion_client: $(CLIENT_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o orion_client
+
 # ─────────────────────────────────────────────
 # Debug builds
 # ─────────────────────────────────────────────
@@ -170,8 +176,8 @@ node_asan:
 # Clean
 # ─────────────────────────────────────────────
 clean:
-	rm -f $(SRC)/**/*.o $(SRC)/**/**/*.o $(SRC)/**/**/*.d $(SRC)/**/*.d $(SRC)/*.o $(SRC)/*.d benchmarks/*.o benchmarks/*.d tests/*.o tests/*.d *.o *.d main head node submit_test submit_benchmark test_project_benchmark universal_builder build_test build_cluster_test build_complex_test 2>/dev/null || true
+	rm -f $(SRC)/**/*.o $(SRC)/**/**/*.o $(SRC)/**/**/*.d $(SRC)/**/*.d $(SRC)/*.o $(SRC)/*.d benchmarks/*.o benchmarks/*.d tests/*.o tests/*.d *.o *.d main head node submit_test submit_benchmark test_project_benchmark universal_builder build_test build_cluster_test build_complex_test orion_client 2>/dev/null || true
 
-.PHONY: main head node submit_test submit_benchmark test_project_benchmark build_test build_cluster_test build_complex_test clean \
+.PHONY: main head node submit_test submit_benchmark test_project_benchmark build_test build_cluster_test build_complex_test orion_client clean \
 	main_debug head_debug node_debug \
 	main_asan head_asan node_asan
