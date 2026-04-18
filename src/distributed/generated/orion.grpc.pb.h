@@ -1026,6 +1026,342 @@ class ClusterHead final {
   typedef WithStreamedUnaryMethod_RegisterNode<WithStreamedUnaryMethod_SubmitTask<WithStreamedUnaryMethod_ReportObjectCreated<WithStreamedUnaryMethod_GetObjectLocation<WithStreamedUnaryMethod_WhoIsLeader<WithStreamedUnaryMethod_Heartbeat<Service > > > > > > StreamedService;
 };
 
+// Distributed CAS service for artifacts and logs.
+class CasService final {
+ public:
+  static constexpr char const* service_full_name() {
+    return "orion.CasService";
+  }
+  class StubInterface {
+   public:
+    virtual ~StubInterface() {}
+    std::unique_ptr< ::grpc::ClientReaderInterface< ::orion::BlobChunk>> FetchBlob(::grpc::ClientContext* context, const ::orion::BlobRequest& request) {
+      return std::unique_ptr< ::grpc::ClientReaderInterface< ::orion::BlobChunk>>(FetchBlobRaw(context, request));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::orion::BlobChunk>> AsyncFetchBlob(::grpc::ClientContext* context, const ::orion::BlobRequest& request, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::orion::BlobChunk>>(AsyncFetchBlobRaw(context, request, cq, tag));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::orion::BlobChunk>> PrepareAsyncFetchBlob(::grpc::ClientContext* context, const ::orion::BlobRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::orion::BlobChunk>>(PrepareAsyncFetchBlobRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientWriterInterface< ::orion::BlobChunk>> UploadBlob(::grpc::ClientContext* context, ::orion::BlobReply* response) {
+      return std::unique_ptr< ::grpc::ClientWriterInterface< ::orion::BlobChunk>>(UploadBlobRaw(context, response));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::orion::BlobChunk>> AsyncUploadBlob(::grpc::ClientContext* context, ::orion::BlobReply* response, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::orion::BlobChunk>>(AsyncUploadBlobRaw(context, response, cq, tag));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::orion::BlobChunk>> PrepareAsyncUploadBlob(::grpc::ClientContext* context, ::orion::BlobReply* response, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriterInterface< ::orion::BlobChunk>>(PrepareAsyncUploadBlobRaw(context, response, cq));
+    }
+    class async_interface {
+     public:
+      virtual ~async_interface() {}
+      virtual void FetchBlob(::grpc::ClientContext* context, const ::orion::BlobRequest* request, ::grpc::ClientReadReactor< ::orion::BlobChunk>* reactor) = 0;
+      virtual void UploadBlob(::grpc::ClientContext* context, ::orion::BlobReply* response, ::grpc::ClientWriteReactor< ::orion::BlobChunk>* reactor) = 0;
+    };
+    typedef class async_interface experimental_async_interface;
+    virtual class async_interface* async() { return nullptr; }
+    class async_interface* experimental_async() { return async(); }
+   private:
+    virtual ::grpc::ClientReaderInterface< ::orion::BlobChunk>* FetchBlobRaw(::grpc::ClientContext* context, const ::orion::BlobRequest& request) = 0;
+    virtual ::grpc::ClientAsyncReaderInterface< ::orion::BlobChunk>* AsyncFetchBlobRaw(::grpc::ClientContext* context, const ::orion::BlobRequest& request, ::grpc::CompletionQueue* cq, void* tag) = 0;
+    virtual ::grpc::ClientAsyncReaderInterface< ::orion::BlobChunk>* PrepareAsyncFetchBlobRaw(::grpc::ClientContext* context, const ::orion::BlobRequest& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientWriterInterface< ::orion::BlobChunk>* UploadBlobRaw(::grpc::ClientContext* context, ::orion::BlobReply* response) = 0;
+    virtual ::grpc::ClientAsyncWriterInterface< ::orion::BlobChunk>* AsyncUploadBlobRaw(::grpc::ClientContext* context, ::orion::BlobReply* response, ::grpc::CompletionQueue* cq, void* tag) = 0;
+    virtual ::grpc::ClientAsyncWriterInterface< ::orion::BlobChunk>* PrepareAsyncUploadBlobRaw(::grpc::ClientContext* context, ::orion::BlobReply* response, ::grpc::CompletionQueue* cq) = 0;
+  };
+  class Stub final : public StubInterface {
+   public:
+    Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
+    std::unique_ptr< ::grpc::ClientReader< ::orion::BlobChunk>> FetchBlob(::grpc::ClientContext* context, const ::orion::BlobRequest& request) {
+      return std::unique_ptr< ::grpc::ClientReader< ::orion::BlobChunk>>(FetchBlobRaw(context, request));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncReader< ::orion::BlobChunk>> AsyncFetchBlob(::grpc::ClientContext* context, const ::orion::BlobRequest& request, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReader< ::orion::BlobChunk>>(AsyncFetchBlobRaw(context, request, cq, tag));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncReader< ::orion::BlobChunk>> PrepareAsyncFetchBlob(::grpc::ClientContext* context, const ::orion::BlobRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReader< ::orion::BlobChunk>>(PrepareAsyncFetchBlobRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientWriter< ::orion::BlobChunk>> UploadBlob(::grpc::ClientContext* context, ::orion::BlobReply* response) {
+      return std::unique_ptr< ::grpc::ClientWriter< ::orion::BlobChunk>>(UploadBlobRaw(context, response));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriter< ::orion::BlobChunk>> AsyncUploadBlob(::grpc::ClientContext* context, ::orion::BlobReply* response, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriter< ::orion::BlobChunk>>(AsyncUploadBlobRaw(context, response, cq, tag));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncWriter< ::orion::BlobChunk>> PrepareAsyncUploadBlob(::grpc::ClientContext* context, ::orion::BlobReply* response, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncWriter< ::orion::BlobChunk>>(PrepareAsyncUploadBlobRaw(context, response, cq));
+    }
+    class async final :
+      public StubInterface::async_interface {
+     public:
+      void FetchBlob(::grpc::ClientContext* context, const ::orion::BlobRequest* request, ::grpc::ClientReadReactor< ::orion::BlobChunk>* reactor) override;
+      void UploadBlob(::grpc::ClientContext* context, ::orion::BlobReply* response, ::grpc::ClientWriteReactor< ::orion::BlobChunk>* reactor) override;
+     private:
+      friend class Stub;
+      explicit async(Stub* stub): stub_(stub) { }
+      Stub* stub() { return stub_; }
+      Stub* stub_;
+    };
+    class async* async() override { return &async_stub_; }
+
+   private:
+    std::shared_ptr< ::grpc::ChannelInterface> channel_;
+    class async async_stub_{this};
+    ::grpc::ClientReader< ::orion::BlobChunk>* FetchBlobRaw(::grpc::ClientContext* context, const ::orion::BlobRequest& request) override;
+    ::grpc::ClientAsyncReader< ::orion::BlobChunk>* AsyncFetchBlobRaw(::grpc::ClientContext* context, const ::orion::BlobRequest& request, ::grpc::CompletionQueue* cq, void* tag) override;
+    ::grpc::ClientAsyncReader< ::orion::BlobChunk>* PrepareAsyncFetchBlobRaw(::grpc::ClientContext* context, const ::orion::BlobRequest& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientWriter< ::orion::BlobChunk>* UploadBlobRaw(::grpc::ClientContext* context, ::orion::BlobReply* response) override;
+    ::grpc::ClientAsyncWriter< ::orion::BlobChunk>* AsyncUploadBlobRaw(::grpc::ClientContext* context, ::orion::BlobReply* response, ::grpc::CompletionQueue* cq, void* tag) override;
+    ::grpc::ClientAsyncWriter< ::orion::BlobChunk>* PrepareAsyncUploadBlobRaw(::grpc::ClientContext* context, ::orion::BlobReply* response, ::grpc::CompletionQueue* cq) override;
+    const ::grpc::internal::RpcMethod rpcmethod_FetchBlob_;
+    const ::grpc::internal::RpcMethod rpcmethod_UploadBlob_;
+  };
+  static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
+
+  class Service : public ::grpc::Service {
+   public:
+    Service();
+    virtual ~Service();
+    virtual ::grpc::Status FetchBlob(::grpc::ServerContext* context, const ::orion::BlobRequest* request, ::grpc::ServerWriter< ::orion::BlobChunk>* writer);
+    virtual ::grpc::Status UploadBlob(::grpc::ServerContext* context, ::grpc::ServerReader< ::orion::BlobChunk>* reader, ::orion::BlobReply* response);
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_FetchBlob : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_FetchBlob() {
+      ::grpc::Service::MarkMethodAsync(0);
+    }
+    ~WithAsyncMethod_FetchBlob() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status FetchBlob(::grpc::ServerContext* /*context*/, const ::orion::BlobRequest* /*request*/, ::grpc::ServerWriter< ::orion::BlobChunk>* /*writer*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestFetchBlob(::grpc::ServerContext* context, ::orion::BlobRequest* request, ::grpc::ServerAsyncWriter< ::orion::BlobChunk>* writer, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncServerStreaming(0, context, request, writer, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_UploadBlob : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_UploadBlob() {
+      ::grpc::Service::MarkMethodAsync(1);
+    }
+    ~WithAsyncMethod_UploadBlob() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status UploadBlob(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::orion::BlobChunk>* /*reader*/, ::orion::BlobReply* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestUploadBlob(::grpc::ServerContext* context, ::grpc::ServerAsyncReader< ::orion::BlobReply, ::orion::BlobChunk>* reader, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncClientStreaming(1, context, reader, new_call_cq, notification_cq, tag);
+    }
+  };
+  typedef WithAsyncMethod_FetchBlob<WithAsyncMethod_UploadBlob<Service > > AsyncService;
+  template <class BaseClass>
+  class WithCallbackMethod_FetchBlob : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithCallbackMethod_FetchBlob() {
+      ::grpc::Service::MarkMethodCallback(0,
+          new ::grpc::internal::CallbackServerStreamingHandler< ::orion::BlobRequest, ::orion::BlobChunk>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::orion::BlobRequest* request) { return this->FetchBlob(context, request); }));
+    }
+    ~WithCallbackMethod_FetchBlob() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status FetchBlob(::grpc::ServerContext* /*context*/, const ::orion::BlobRequest* /*request*/, ::grpc::ServerWriter< ::orion::BlobChunk>* /*writer*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerWriteReactor< ::orion::BlobChunk>* FetchBlob(
+      ::grpc::CallbackServerContext* /*context*/, const ::orion::BlobRequest* /*request*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithCallbackMethod_UploadBlob : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithCallbackMethod_UploadBlob() {
+      ::grpc::Service::MarkMethodCallback(1,
+          new ::grpc::internal::CallbackClientStreamingHandler< ::orion::BlobChunk, ::orion::BlobReply>(
+            [this](
+                   ::grpc::CallbackServerContext* context, ::orion::BlobReply* response) { return this->UploadBlob(context, response); }));
+    }
+    ~WithCallbackMethod_UploadBlob() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status UploadBlob(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::orion::BlobChunk>* /*reader*/, ::orion::BlobReply* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerReadReactor< ::orion::BlobChunk>* UploadBlob(
+      ::grpc::CallbackServerContext* /*context*/, ::orion::BlobReply* /*response*/)  { return nullptr; }
+  };
+  typedef WithCallbackMethod_FetchBlob<WithCallbackMethod_UploadBlob<Service > > CallbackService;
+  typedef CallbackService ExperimentalCallbackService;
+  template <class BaseClass>
+  class WithGenericMethod_FetchBlob : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_FetchBlob() {
+      ::grpc::Service::MarkMethodGeneric(0);
+    }
+    ~WithGenericMethod_FetchBlob() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status FetchBlob(::grpc::ServerContext* /*context*/, const ::orion::BlobRequest* /*request*/, ::grpc::ServerWriter< ::orion::BlobChunk>* /*writer*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_UploadBlob : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_UploadBlob() {
+      ::grpc::Service::MarkMethodGeneric(1);
+    }
+    ~WithGenericMethod_UploadBlob() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status UploadBlob(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::orion::BlobChunk>* /*reader*/, ::orion::BlobReply* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_FetchBlob : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_FetchBlob() {
+      ::grpc::Service::MarkMethodRaw(0);
+    }
+    ~WithRawMethod_FetchBlob() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status FetchBlob(::grpc::ServerContext* /*context*/, const ::orion::BlobRequest* /*request*/, ::grpc::ServerWriter< ::orion::BlobChunk>* /*writer*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestFetchBlob(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncWriter< ::grpc::ByteBuffer>* writer, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncServerStreaming(0, context, request, writer, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_UploadBlob : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_UploadBlob() {
+      ::grpc::Service::MarkMethodRaw(1);
+    }
+    ~WithRawMethod_UploadBlob() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status UploadBlob(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::orion::BlobChunk>* /*reader*/, ::orion::BlobReply* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestUploadBlob(::grpc::ServerContext* context, ::grpc::ServerAsyncReader< ::grpc::ByteBuffer, ::grpc::ByteBuffer>* reader, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncClientStreaming(1, context, reader, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawCallbackMethod_FetchBlob : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawCallbackMethod_FetchBlob() {
+      ::grpc::Service::MarkMethodRawCallback(0,
+          new ::grpc::internal::CallbackServerStreamingHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const::grpc::ByteBuffer* request) { return this->FetchBlob(context, request); }));
+    }
+    ~WithRawCallbackMethod_FetchBlob() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status FetchBlob(::grpc::ServerContext* /*context*/, const ::orion::BlobRequest* /*request*/, ::grpc::ServerWriter< ::orion::BlobChunk>* /*writer*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerWriteReactor< ::grpc::ByteBuffer>* FetchBlob(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/)  { return nullptr; }
+  };
+  template <class BaseClass>
+  class WithRawCallbackMethod_UploadBlob : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawCallbackMethod_UploadBlob() {
+      ::grpc::Service::MarkMethodRawCallback(1,
+          new ::grpc::internal::CallbackClientStreamingHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+                   ::grpc::CallbackServerContext* context, ::grpc::ByteBuffer* response) { return this->UploadBlob(context, response); }));
+    }
+    ~WithRawCallbackMethod_UploadBlob() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status UploadBlob(::grpc::ServerContext* /*context*/, ::grpc::ServerReader< ::orion::BlobChunk>* /*reader*/, ::orion::BlobReply* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerReadReactor< ::grpc::ByteBuffer>* UploadBlob(
+      ::grpc::CallbackServerContext* /*context*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
+  };
+  typedef Service StreamedUnaryService;
+  template <class BaseClass>
+  class WithSplitStreamingMethod_FetchBlob : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithSplitStreamingMethod_FetchBlob() {
+      ::grpc::Service::MarkMethodStreamed(0,
+        new ::grpc::internal::SplitServerStreamingHandler<
+          ::orion::BlobRequest, ::orion::BlobChunk>(
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerSplitStreamer<
+                     ::orion::BlobRequest, ::orion::BlobChunk>* streamer) {
+                       return this->StreamedFetchBlob(context,
+                         streamer);
+                  }));
+    }
+    ~WithSplitStreamingMethod_FetchBlob() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status FetchBlob(::grpc::ServerContext* /*context*/, const ::orion::BlobRequest* /*request*/, ::grpc::ServerWriter< ::orion::BlobChunk>* /*writer*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with split streamed
+    virtual ::grpc::Status StreamedFetchBlob(::grpc::ServerContext* context, ::grpc::ServerSplitStreamer< ::orion::BlobRequest,::orion::BlobChunk>* server_split_streamer) = 0;
+  };
+  typedef WithSplitStreamingMethod_FetchBlob<Service > SplitStreamedService;
+  typedef WithSplitStreamingMethod_FetchBlob<Service > StreamedService;
+};
+
 // Inter-replica communication for the Raft group.
 class RaftService final {
  public:

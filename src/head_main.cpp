@@ -34,8 +34,9 @@
 #include "distributed/cluster/cas_store.h"
 #include "distributed/cluster/cas_service_impl.h"
 #include "distributed/observability/http_server.h"
-#include "distributed/observability/logger.h"
 #include "distributed/observability/metrics.h"
+#include "distributed/observability/telemetry.h"
+#include "distributed/observability/otlp_exporter.h"
 
 // ── gRPC ClusterHead service implementation ──────────────────────────────────
 class HeadServiceImpl final : public orion::ClusterHead::Service {
@@ -73,53 +74,69 @@ public:
         if (!raft_.is_leader()) {
             reply->set_accepted(false);
             std::string leader = raft_.leader_address();
-            // Guard: Never redirect to yourself if you know you are not the leader.
             if (!leader.empty() && leader != self_addr_) {
                 reply->set_leader_address(leader);
             }
             return grpc::Status::OK;
         }
 
-        // --- Action Cache Lookup (Dependency Aware / Merkle) ---
-        std::string action_hash = req->expected_hash();
-        if (action_hash.empty()) {
-            std::map<std::string, std::string> dep_actions;
-            // Fallback: Compute it if the client didn't provide it.
-            // Note: Parallel submission might miss here if dependencies aren't ready.
-            std::vector<std::string> args_vec;
-            for (const auto& a : req->args()) args_vec.push_back(a);
-            
-            action_hash = orion::distributed::ActionCache::compute_action_hash(
-                req->function_name(), args_vec, dep_actions
-            );
+        // --- Action Cache Lookup ---
+        std::vector<std::string> args_vec;
+        for (const auto& a : req->args()) args_vec.push_back(a);
+        
+        std::map<std::string, std::string> dep_actions;
+        for (const auto& [id, hash] : req->input_map()) {
+            dep_actions[id] = hash;
         }
 
+        std::string action_hash = orion::distributed::ActionCache::compute_action_hash(
+            req->function_name(), args_vec, dep_actions);
+        
+        // --- Tracing instrumentation ---
+        std::optional<orion::observability::TraceContext> parent_ctx;
+        if (req->has_trace_context()) {
+            parent_ctx = orion::observability::TraceContext::from_proto(req->trace_context());
+        }
+
+        auto span = orion::observability::Tracer::instance().start_span(
+            "SubmitTask", "ClusterHead", 
+            parent_ctx ? &(*parent_ctx) : nullptr);
+        
+        span->set_attribute("task_id", req->task_id());
+        span->set_attribute("function", req->function_name());
+        orion::observability::g_current_trace_id = span->context().trace_id;
+        
         std::string cached_obj_hash = cas_.lookup_action(action_hash);
-        // Allow all task types (including shell_execute) to benefit from the cache.
-        // The CAS-v2 system ensures that if a hash is present, the blob is available.
         if (!cached_obj_hash.empty()) {
             LOG_INFO("ClusterHead", "action_cache_hit",
                      {{"task_id", req->task_id()}, {"action_hash", action_hash}, {"result_hash", cached_obj_hash}});
             
-            // Mark as done in scheduler so it doesn't try to schedule it
             scheduler_.put_object_with_hash(req->task_id(), std::nullopt, cached_obj_hash);
             
             reply->set_accepted(true);
             reply->set_output_hash(cached_obj_hash);
+            
+            span->set_attribute("cache_hit", "true");
+            span->end();
+            orion::observability::g_current_trace_id = "";
             return grpc::Status::OK;
         }
-
-        // Store action_hash mapping for this task_id.
-        // [Already handled via replication in OrionLogEntry]
 
         orion::OrionLogEntry entry;
         entry.set_term(raft_.current_term());
         auto* sub = entry.mutable_submitted();
         sub->mutable_task_req()->CopyFrom(*req);
+        
+        // Inject tracing context into the log entry.
+        span->context().to_proto(sub->mutable_task_req()->mutable_trace_context());
         sub->set_action_hash(action_hash);
 
         bool replicated = raft_.replicate(entry);
         reply->set_accepted(replicated);
+        
+        span->set_attribute("replicated", replicated ? "true" : "false");
+        span->end();
+        orion::observability::g_current_trace_id = "";
         return grpc::Status::OK;
     }
 
@@ -327,8 +344,16 @@ int main(int argc, char* argv[]) {
         LOG_WARN("ClusterHead", "http_bind_failed",
                  {"port", std::to_string(metrics_port)});
     } else {
-        LOG_INFO("ClusterHead", "http_listening",
-                 {"port", std::to_string(metrics_port)});
+        // Initialize OTLP Exporter.
+    std::string otel_collector = "otel-collector"; // Default k8s service name
+    const char* otel_env = std::getenv("OTEL_COLLECTOR_HOST");
+    if (otel_env) otel_collector = otel_env;
+    orion::observability::OtlpExporter exporter(otel_collector, 4318);
+
+    LOG_INFO("ClusterHead", "starting",
+             {"port", port},
+             {"metrics_port", std::to_string(metrics_port)},
+             {"otel_collector", otel_collector});
     }
 
     // ── Cancel-dispatcher thread ─────────────────────────────────────────────

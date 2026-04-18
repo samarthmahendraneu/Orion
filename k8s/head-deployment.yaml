@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: orion-head-service
+spec:
+  clusterIP: None
+  selector:
+    app: orion-head
+  ports:
+    - protocol: TCP
+      port: 50050
+      targetPort: 50050
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: orion-head
+spec:
+  serviceName: "orion-head-service"
+  replicas: 3
+  selector:
+    matchLabels:
+      app: orion-head
+  template:
+    metadata:
+      labels:
+        app: orion-head
+    spec:
+      containers:
+      - name: head
+        image: orion-build:latest
+        imagePullPolicy: Never
+        command: ["sh", "-c"]
+        # Build the peer list dynamically from the StatefulSet pod names.
+        # For a 3-replica StatefulSet (orion-head-0..2), each pod excludes
+        # itself and passes the other two as Raft peers.
+        args:
+          - |
+            SELF=$HOSTNAME
+            PEERS=""
+            for i in 0 1 2; do
+              NAME="orion-head-$i"
+              if [ "$NAME" != "$SELF" ]; then
+                PEERS="$PEERS $NAME:$NAME.orion-head-service:50050"
+              fi
+            done
+            echo "[k8s] Starting head $SELF with peers:$PEERS"
+            exec /orion/head 50050 9090 $SELF $SELF.orion-head-service:50050 $PEERS
+        workingDir: /orion-workspace/demo_project_2
+        volumeMounts:
+        - name: workspace
+          mountPath: /orion-workspace
+      volumes:
+      - name: workspace
+        persistentVolumeClaim:
+          claimName: orion-workspace-pvc

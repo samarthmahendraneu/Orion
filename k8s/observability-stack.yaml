@@ -1,0 +1,265 @@
+# ──────────────────────────────────────────────────────────────────────────
+# ORION OBSERVABILITY STACK (Phase 7)
+# Loki, Grafana, Tempo (Jaeger), Prometheus + OTel Collector
+# ──────────────────────────────────────────────────────────────────────────
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability
+
+---
+# 1. OpenTelemetry Collector (The Gateway)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-conf
+  namespace: observability
+data:
+  otel-collector-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          http:
+            endpoint: "0.0.0.0:4318"
+          grpc:
+            endpoint: "0.0.0.0:4317"
+    
+    processors:
+      batch:
+
+    exporters:
+      prometheus:
+        endpoint: "0.0.0.0:8889"
+      logging:
+        verbosity: normal
+      otlp/tempo:
+        endpoint: tempo:4317
+        tls:
+          insecure: true
+      loki:
+        endpoint: "http://loki:3100/loki/api/v1/push"
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp/tempo, logging]
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [prometheus, logging]
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [loki, logging]
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      containers:
+      - name: otel-collector
+        image: otel/opentelemetry-collector-contrib:latest
+        command:
+          - "/otelcol-contrib"
+          - "--config=/etc/otelcol/otel-collector-config.yaml"
+        ports:
+        - containerPort: 4318 # OTLP HTTP
+        - containerPort: 4317 # OTLP gRPC
+        - containerPort: 8889 # Prometheus exporter
+        volumeMounts:
+        - name: otel-collector-config-vol
+          mountPath: /etc/otelcol
+      volumes:
+      - name: otel-collector-config-vol
+        configMap:
+          name: otel-collector-conf
+          items:
+            - key: otel-collector-config.yaml
+              path: otel-collector-config.yaml
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: observability
+spec:
+  ports:
+  - name: otlp-http
+    port: 4318
+    targetPort: 4318
+  - name: otlp-grpc
+    port: 4317
+    targetPort: 4317
+  - name: prometheus
+    port: 8889
+    targetPort: 8889
+  selector:
+    app: otel-collector
+
+---
+# 2. Tempo (Tracing / Jaeger-compatible)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tempo
+  namespace: observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tempo
+  template:
+    metadata:
+      labels:
+        app: tempo
+    spec:
+      containers:
+      - name: tempo
+        image: grafana/tempo:latest
+        args: ["-config.file=/etc/tempo.yaml"]
+        ports:
+        - containerPort: 3200 # jaeger-query
+        - containerPort: 4317 # otlp-grpc
+        volumeMounts:
+        - name: tempo-config
+          mountPath: /etc/tempo.yaml
+          subPath: tempo.yaml
+      volumes:
+      - name: tempo-config
+        configMap:
+          name: tempo-config
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tempo-config
+  namespace: observability
+data:
+  tempo.yaml: |
+    server:
+      http_listen_port: 3200
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: "0.0.0.0:4317"
+    storage:
+      trace:
+        backend: local
+        local:
+          path: /tmp/tempo/traces
+        wal:
+          path: /tmp/tempo/wal
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tempo
+  namespace: observability
+spec:
+  ports:
+  - name: otlp-grpc
+    port: 4317
+    targetPort: 4317
+  - name: http-query
+    port: 3200
+    targetPort: 3200
+  selector:
+    app: tempo
+
+---
+# 3. Loki (Logs)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loki
+  namespace: observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loki
+  template:
+    metadata:
+      labels:
+        app: loki
+    spec:
+      containers:
+      - name: loki
+        image: grafana/loki:latest
+        args: ["-config.file=/etc/loki/local-config.yaml"]
+        ports:
+        - containerPort: 3100
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki
+  namespace: observability
+spec:
+  ports:
+  - port: 3100
+    targetPort: 3100
+  selector:
+    app: loki
+
+---
+# 4. Grafana (Dashboard)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: GF_AUTH_ANONYMOUS_ENABLED
+          value: "true"
+        - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+          value: "Admin"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: observability
+spec:
+  ports:
+  - port: 3000
+    targetPort: 3000
+  selector:
+    app: grafana

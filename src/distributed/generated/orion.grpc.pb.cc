@@ -293,6 +293,95 @@ ClusterHead::Service::~Service() {
 }
 
 
+static const char* CasService_method_names[] = {
+  "/orion.CasService/FetchBlob",
+  "/orion.CasService/UploadBlob",
+};
+
+std::unique_ptr< CasService::Stub> CasService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
+  (void)options;
+  std::unique_ptr< CasService::Stub> stub(new CasService::Stub(channel, options));
+  return stub;
+}
+
+CasService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options)
+  : channel_(channel), rpcmethod_FetchBlob_(CasService_method_names[0], options.suffix_for_stats(),::grpc::internal::RpcMethod::SERVER_STREAMING, channel)
+  , rpcmethod_UploadBlob_(CasService_method_names[1], options.suffix_for_stats(),::grpc::internal::RpcMethod::CLIENT_STREAMING, channel)
+  {}
+
+::grpc::ClientReader< ::orion::BlobChunk>* CasService::Stub::FetchBlobRaw(::grpc::ClientContext* context, const ::orion::BlobRequest& request) {
+  return ::grpc::internal::ClientReaderFactory< ::orion::BlobChunk>::Create(channel_.get(), rpcmethod_FetchBlob_, context, request);
+}
+
+void CasService::Stub::async::FetchBlob(::grpc::ClientContext* context, const ::orion::BlobRequest* request, ::grpc::ClientReadReactor< ::orion::BlobChunk>* reactor) {
+  ::grpc::internal::ClientCallbackReaderFactory< ::orion::BlobChunk>::Create(stub_->channel_.get(), stub_->rpcmethod_FetchBlob_, context, request, reactor);
+}
+
+::grpc::ClientAsyncReader< ::orion::BlobChunk>* CasService::Stub::AsyncFetchBlobRaw(::grpc::ClientContext* context, const ::orion::BlobRequest& request, ::grpc::CompletionQueue* cq, void* tag) {
+  return ::grpc::internal::ClientAsyncReaderFactory< ::orion::BlobChunk>::Create(channel_.get(), cq, rpcmethod_FetchBlob_, context, request, true, tag);
+}
+
+::grpc::ClientAsyncReader< ::orion::BlobChunk>* CasService::Stub::PrepareAsyncFetchBlobRaw(::grpc::ClientContext* context, const ::orion::BlobRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncReaderFactory< ::orion::BlobChunk>::Create(channel_.get(), cq, rpcmethod_FetchBlob_, context, request, false, nullptr);
+}
+
+::grpc::ClientWriter< ::orion::BlobChunk>* CasService::Stub::UploadBlobRaw(::grpc::ClientContext* context, ::orion::BlobReply* response) {
+  return ::grpc::internal::ClientWriterFactory< ::orion::BlobChunk>::Create(channel_.get(), rpcmethod_UploadBlob_, context, response);
+}
+
+void CasService::Stub::async::UploadBlob(::grpc::ClientContext* context, ::orion::BlobReply* response, ::grpc::ClientWriteReactor< ::orion::BlobChunk>* reactor) {
+  ::grpc::internal::ClientCallbackWriterFactory< ::orion::BlobChunk>::Create(stub_->channel_.get(), stub_->rpcmethod_UploadBlob_, context, response, reactor);
+}
+
+::grpc::ClientAsyncWriter< ::orion::BlobChunk>* CasService::Stub::AsyncUploadBlobRaw(::grpc::ClientContext* context, ::orion::BlobReply* response, ::grpc::CompletionQueue* cq, void* tag) {
+  return ::grpc::internal::ClientAsyncWriterFactory< ::orion::BlobChunk>::Create(channel_.get(), cq, rpcmethod_UploadBlob_, context, response, true, tag);
+}
+
+::grpc::ClientAsyncWriter< ::orion::BlobChunk>* CasService::Stub::PrepareAsyncUploadBlobRaw(::grpc::ClientContext* context, ::orion::BlobReply* response, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncWriterFactory< ::orion::BlobChunk>::Create(channel_.get(), cq, rpcmethod_UploadBlob_, context, response, false, nullptr);
+}
+
+CasService::Service::Service() {
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      CasService_method_names[0],
+      ::grpc::internal::RpcMethod::SERVER_STREAMING,
+      new ::grpc::internal::ServerStreamingHandler< CasService::Service, ::orion::BlobRequest, ::orion::BlobChunk>(
+          [](CasService::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::orion::BlobRequest* req,
+             ::grpc::ServerWriter<::orion::BlobChunk>* writer) {
+               return service->FetchBlob(ctx, req, writer);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      CasService_method_names[1],
+      ::grpc::internal::RpcMethod::CLIENT_STREAMING,
+      new ::grpc::internal::ClientStreamingHandler< CasService::Service, ::orion::BlobChunk, ::orion::BlobReply>(
+          [](CasService::Service* service,
+             ::grpc::ServerContext* ctx,
+             ::grpc::ServerReader<::orion::BlobChunk>* reader,
+             ::orion::BlobReply* resp) {
+               return service->UploadBlob(ctx, reader, resp);
+             }, this)));
+}
+
+CasService::Service::~Service() {
+}
+
+::grpc::Status CasService::Service::FetchBlob(::grpc::ServerContext* context, const ::orion::BlobRequest* request, ::grpc::ServerWriter< ::orion::BlobChunk>* writer) {
+  (void) context;
+  (void) request;
+  (void) writer;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status CasService::Service::UploadBlob(::grpc::ServerContext* context, ::grpc::ServerReader< ::orion::BlobChunk>* reader, ::orion::BlobReply* response) {
+  (void) context;
+  (void) reader;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+
 static const char* RaftService_method_names[] = {
   "/orion.RaftService/RequestVote",
   "/orion.RaftService/AppendEntries",

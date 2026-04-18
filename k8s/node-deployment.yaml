@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orion-node
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: orion-node
+  template:
+    metadata:
+      labels:
+        app: orion-node
+    spec:
+      containers:
+      - name: worker
+        image: orion-build:latest
+        imagePullPolicy: Never
+        command: ["sh", "-c"]
+        # NODE_PORT is fixed at 6001 per pod; the node registers its POD_IP:6001
+        # with the head so the head can dispatch back to it.
+        args: ["exec /orion/node 50050 6001 $HOSTNAME"]
+        env:
+          - name: HEAD_HOST
+            value: "orion-head-0.orion-head-service"
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+        # One CPU per worker keeps profiles clean for benchmarking.
+        resources:
+          limits:
+            cpu: "1"
+        # workingDir must match where the Makefile-driven artefacts land.
+        # The PVC root is /orion-workspace; demo_project lives directly under it.
+        workingDir: /orion-workspace/demo_project_2
+        volumeMounts:
+        - name: workspace
+          mountPath: /orion-workspace
+      volumes:
+      - name: workspace
+        persistentVolumeClaim:
+          claimName: orion-workspace-pvc

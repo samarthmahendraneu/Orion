@@ -35,6 +35,10 @@
 
 namespace orion::observability {
 
+// Thread-local trace context so the logger can pick it up without 
+// threading it through every call site.
+extern thread_local std::string g_current_trace_id;
+
 enum class LogLevel { DEBUG, INFO, WARN, ERROR, CRITICAL };
 
 inline const char* level_str(LogLevel l) {
@@ -105,6 +109,11 @@ public:
            << ",\"lvl\":\"" << level_str(lvl) << "\""
            << ",\"comp\":\"" << json_escape(component) << "\""
            << ",\"event\":\"" << json_escape(event) << "\"";
+
+        if (!g_current_trace_id.empty()) {
+            os << ",\"trace_id\":\"" << g_current_trace_id << "\"";
+        }
+
         for (const auto& [k, v] : fields) {
             os << ",\"" << json_escape(k) << "\":\"" << json_escape(v) << "\"";
         }

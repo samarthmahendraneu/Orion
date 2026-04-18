@@ -26,6 +26,7 @@
 #include "distributed/rpc/cas_client.h"
 #include "distributed/worker_pool.h"
 #include "distributed/observability/logger.h"
+#include "distributed/observability/telemetry.h"
 
 #include "distributed/node_runtime.h"
 #include "distributed/functions/function_registry.h"
@@ -61,6 +62,7 @@ public:
             std::string function;
             std::map<std::string, std::string> inputs;
             std::string command;
+            observability::TraceContext trace_ctx;
         };
 
         auto ctx = std::make_shared<TaskContext>();
@@ -73,6 +75,10 @@ public:
         if (fn_name == "shell_execute" && !req->args().empty()) {
             ctx->command = std::string(req->args(0).begin(), req->args(0).end());
         }
+        
+        if (req->has_trace_context()) {
+            ctx->trace_ctx = observability::TraceContext::from_proto(req->trace_context());
+        }
 
         // Submit to worker pool
         worker_pool_->submit([this, ctx](const fs::path& sandbox_dir) {
@@ -80,6 +86,17 @@ public:
                 LOG_INFO("NodeService", "task_cancelled_skip", {{"task_id", ctx->id}});
                 return;
             }
+
+            // --- Tracing instrumentation ---
+            auto span = observability::Tracer::instance().start_span(
+                "ExecuteTask", "NodeWorker", 
+                ctx->trace_ctx.is_valid() ? &ctx->trace_ctx : nullptr);
+            span->set_attribute("task_id", ctx->id);
+            span->set_attribute("function", ctx->function);
+            if (!ctx->command.empty()) span->set_attribute("command", ctx->command);
+            
+            // Set thread-local trace ID for the worker thread.
+            observability::g_current_trace_id = span->context().trace_id;
 
             // 1. FETCH DEPENDENCIES
             for (auto const& [name, hash] : ctx->inputs) {
@@ -130,6 +147,9 @@ public:
                 LOG_ERROR("NodeService", "task_failed", {{"task_id", ctx->id}});
             }
 
+            span->set_attribute("success", success ? "true" : "false");
+            span->end();
+            observability::g_current_trace_id = "";
             clear_running_(ctx->id);
         });
 

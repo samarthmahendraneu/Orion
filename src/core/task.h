@@ -6,6 +6,7 @@
 #include <functional>
 #include <any>
 
+#include "../distributed/observability/telemetry.h"
 #include "object_ref.h"
 
 namespace orion {
@@ -18,6 +19,9 @@ namespace orion {
         
         // V2: Content-addressed dependencies (Filename -> Hash)
         std::map<std::string, std::string> input_map;
+
+        // Trace context (lineage)
+        observability::TraceContext trace_context;
 
         Task() = default;   // 👈 allows `Task task;`
 

@@ -60,6 +60,15 @@ message TaskRequest {
   // V2: Content-addressed dependencies (Filename -> Hash)
   reserved 7;
   map<string, string> input_map = 8;
+
+  // Tracing context for lineage and observability.
+  TraceContext trace_context = 9;
+}
+
+message TraceContext {
+  string trace_id = 1;
+  string span_id = 2;
+  string parent_span_id = 3;
 }
 
 message BlobRequest {
@@ -93,6 +102,7 @@ message ObjectReport {
   string object_id = 1;
   string node_id = 2;
   string hash = 3;
+  TraceContext trace_context = 4;
 }
 
 message ObjectLocationRequest {
@@ -116,6 +126,7 @@ message HeartbeatRequest {
   // Coarse health fields so future placement can reason about load.
   int32 running_tasks = 2;
   int32 available_workers = 3;
+  TraceContext trace_context = 4;
 }
 
 message HeartbeatReply {

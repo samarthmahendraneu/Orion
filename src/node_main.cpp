@@ -27,6 +27,8 @@
 #include "distributed/rpc/cas_client.h"
 #include "distributed/worker_pool.h"
 #include "distributed/observability/logger.h"
+#include "distributed/observability/telemetry.h"
+#include "distributed/observability/otlp_exporter.h"
 
 static std::atomic<bool> g_running{true};
 static std::unique_ptr<grpc::Server> g_grpc_server;
@@ -57,6 +59,17 @@ int main(int argc, char* argv[]) {
         node_address
     );
     node.start();   // registers with head internally
+
+    // Initialize OTLP Exporter.
+    std::string otel_collector = "otel-collector"; // Default k8s service name
+    const char* otel_env = std::getenv("OTEL_COLLECTOR_HOST");
+    if (otel_env) otel_collector = otel_env;
+    orion::observability::OtlpExporter exporter(otel_collector, 4318);
+
+    LOG_INFO("NodeMain", "starting",
+             {"node_id", node_id},
+             {"node_address", node_address},
+             {"otel_collector", otel_collector});
 
     orion::distributed::FunctionRegistry fn_reg;
     orion::distributed::register_builtin_functions(fn_reg);
