@@ -43,6 +43,7 @@
 
 #include "../cluster/node_registry.h"
 #include "../rpc/node_client.h"
+#include "latency_tracker.h"
 
 #include "../../core/task.h"
 #include "../cluster/global_object_store.h"
@@ -153,6 +154,7 @@ namespace orion::distributed {
     private:
         NodeRegistry& registry_;
         NodeClient& client_;
+        LatencyTracker latency_tracker_;
 
         std::unordered_map<std::string, std::any> global_objects_;
         std::queue<orion::Task> pending_;

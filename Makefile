@@ -7,6 +7,7 @@ BASE_FLAGS := -std=c++23 -Wall -Wextra -pthread
 RELEASE_FLAGS := -O2
 DEBUG_FLAGS := -O0 -g
 ASAN_FLAGS := -fsanitize=address -fno-omit-frame-pointer
+TSAN_FLAGS := -fsanitize=thread
 
 # Default build = release
 CXXFLAGS := $(BASE_FLAGS) $(RELEASE_FLAGS)
@@ -155,6 +156,39 @@ node_asan:
 	$(MAKE) node \
 	CXXFLAGS="$(BASE_FLAGS) $(DEBUG_FLAGS) $(ASAN_FLAGS)" \
 	LDFLAGS="$(ASAN_FLAGS)"
+
+submit_benchmark_asan:
+	$(MAKE) submit_benchmark \
+	CXXFLAGS="$(BASE_FLAGS) $(DEBUG_FLAGS) $(ASAN_FLAGS)" \
+	LDFLAGS="$(ASAN_FLAGS)"
+
+orion_client_asan:
+	$(MAKE) orion_client \
+	CXXFLAGS="$(BASE_FLAGS) $(DEBUG_FLAGS) $(ASAN_FLAGS)" \
+	LDFLAGS="$(ASAN_FLAGS)"
+
+# ─────────────────────────────────────────────
+# ThreadSanitizer builds
+# ─────────────────────────────────────────────
+head_tsan:
+	$(MAKE) head \
+	CXXFLAGS="$(BASE_FLAGS) $(DEBUG_FLAGS) $(TSAN_FLAGS)" \
+	LDFLAGS="$(TSAN_FLAGS)"
+
+node_tsan:
+	$(MAKE) node \
+	CXXFLAGS="$(BASE_FLAGS) $(DEBUG_FLAGS) $(TSAN_FLAGS)" \
+	LDFLAGS="$(TSAN_FLAGS)"
+
+submit_benchmark_tsan:
+	$(MAKE) submit_benchmark \
+	CXXFLAGS="$(BASE_FLAGS) $(DEBUG_FLAGS) $(TSAN_FLAGS)" \
+	LDFLAGS="$(TSAN_FLAGS)"
+
+orion_client_tsan:
+	$(MAKE) orion_client \
+	CXXFLAGS="$(BASE_FLAGS) $(DEBUG_FLAGS) $(TSAN_FLAGS)" \
+	LDFLAGS="$(TSAN_FLAGS)"
 
 # ─────────────────────────────────────────────
 # Compile rules

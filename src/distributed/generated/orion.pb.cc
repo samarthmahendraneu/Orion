@@ -144,6 +144,65 @@ struct TraceContextDefaultTypeInternal {
 
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
     PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 TraceContextDefaultTypeInternal _TraceContext_default_instance_;
+
+inline constexpr TaskStatusRequest::Impl_::Impl_(
+    ::_pbi::ConstantInitialized) noexcept
+      : _cached_size_{0},
+        task_id_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()) {}
+
+template <typename>
+PROTOBUF_CONSTEXPR TaskStatusRequest::TaskStatusRequest(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(TaskStatusRequest_class_data_.base()),
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(),
+#endif  // PROTOBUF_CUSTOM_VTABLE
+      _impl_(::_pbi::ConstantInitialized()) {
+}
+struct TaskStatusRequestDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR TaskStatusRequestDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~TaskStatusRequestDefaultTypeInternal() {}
+  union {
+    TaskStatusRequest _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 TaskStatusRequestDefaultTypeInternal _TaskStatusRequest_default_instance_;
+
+inline constexpr TaskStatusReply::Impl_::Impl_(
+    ::_pbi::ConstantInitialized) noexcept
+      : _cached_size_{0},
+        output_hash_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        error_message_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        finished_{false},
+        failed_{false} {}
+
+template <typename>
+PROTOBUF_CONSTEXPR TaskStatusReply::TaskStatusReply(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(TaskStatusReply_class_data_.base()),
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(),
+#endif  // PROTOBUF_CUSTOM_VTABLE
+      _impl_(::_pbi::ConstantInitialized()) {
+}
+struct TaskStatusReplyDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR TaskStatusReplyDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~TaskStatusReplyDefaultTypeInternal() {}
+  union {
+    TaskStatusReply _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 TaskStatusReplyDefaultTypeInternal _TaskStatusReply_default_instance_;
 template <typename>
 PROTOBUF_CONSTEXPR TaskRequest_InputMapEntry_DoNotUse::TaskRequest_InputMapEntry_DoNotUse(::_pbi::ConstantInitialized)
 #if defined(PROTOBUF_CUSTOM_VTABLE)
@@ -1046,6 +1105,22 @@ const ::uint32_t
         0,
         1,
         0x081, // bitmap
+        PROTOBUF_FIELD_OFFSET(::orion::TaskStatusRequest, _impl_._has_bits_),
+        4, // hasbit index offset
+        PROTOBUF_FIELD_OFFSET(::orion::TaskStatusRequest, _impl_.task_id_),
+        0,
+        0x081, // bitmap
+        PROTOBUF_FIELD_OFFSET(::orion::TaskStatusReply, _impl_._has_bits_),
+        7, // hasbit index offset
+        PROTOBUF_FIELD_OFFSET(::orion::TaskStatusReply, _impl_.finished_),
+        PROTOBUF_FIELD_OFFSET(::orion::TaskStatusReply, _impl_.output_hash_),
+        PROTOBUF_FIELD_OFFSET(::orion::TaskStatusReply, _impl_.failed_),
+        PROTOBUF_FIELD_OFFSET(::orion::TaskStatusReply, _impl_.error_message_),
+        2,
+        0,
+        3,
+        1,
+        0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::orion::ObjectData, _impl_._has_bits_),
         5, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::orion::ObjectData, _impl_.object_id_),
@@ -1220,25 +1295,27 @@ static const ::_pbi::MigrationSchema
         {85, sizeof(::orion::ObjectReport)},
         {96, sizeof(::orion::ObjectLocationRequest)},
         {101, sizeof(::orion::ObjectLocationReply)},
-        {108, sizeof(::orion::ObjectData)},
-        {115, sizeof(::orion::Empty)},
-        {116, sizeof(::orion::HeartbeatRequest)},
-        {127, sizeof(::orion::HeartbeatReply)},
-        {136, sizeof(::orion::CancelRequest)},
-        {143, sizeof(::orion::CancelReply)},
-        {148, sizeof(::orion::WhoIsLeaderReply)},
-        {155, sizeof(::orion::VoteRequest)},
-        {166, sizeof(::orion::VoteReply)},
-        {173, sizeof(::orion::AppendEntriesRequest)},
-        {188, sizeof(::orion::AppendEntriesReply)},
-        {197, sizeof(::orion::OrionLogEntry)},
-        {220, sizeof(::orion::TaskSubmitted)},
-        {227, sizeof(::orion::TaskDispatched)},
-        {234, sizeof(::orion::TaskCompleted)},
-        {243, sizeof(::orion::TaskFailed)},
-        {250, sizeof(::orion::TaskCancelled)},
-        {255, sizeof(::orion::NodeRegistered)},
-        {262, sizeof(::orion::NodeEvicted)},
+        {108, sizeof(::orion::TaskStatusRequest)},
+        {113, sizeof(::orion::TaskStatusReply)},
+        {124, sizeof(::orion::ObjectData)},
+        {131, sizeof(::orion::Empty)},
+        {132, sizeof(::orion::HeartbeatRequest)},
+        {143, sizeof(::orion::HeartbeatReply)},
+        {152, sizeof(::orion::CancelRequest)},
+        {159, sizeof(::orion::CancelReply)},
+        {164, sizeof(::orion::WhoIsLeaderReply)},
+        {171, sizeof(::orion::VoteRequest)},
+        {182, sizeof(::orion::VoteReply)},
+        {189, sizeof(::orion::AppendEntriesRequest)},
+        {204, sizeof(::orion::AppendEntriesReply)},
+        {213, sizeof(::orion::OrionLogEntry)},
+        {236, sizeof(::orion::TaskSubmitted)},
+        {243, sizeof(::orion::TaskDispatched)},
+        {250, sizeof(::orion::TaskCompleted)},
+        {259, sizeof(::orion::TaskFailed)},
+        {266, sizeof(::orion::TaskCancelled)},
+        {271, sizeof(::orion::NodeRegistered)},
+        {278, sizeof(::orion::NodeEvicted)},
 };
 static const ::_pb::Message* PROTOBUF_NONNULL const file_default_instances[] = {
     &::orion::_RegisterNodeRequest_default_instance_._instance,
@@ -1253,6 +1330,8 @@ static const ::_pb::Message* PROTOBUF_NONNULL const file_default_instances[] = {
     &::orion::_ObjectReport_default_instance_._instance,
     &::orion::_ObjectLocationRequest_default_instance_._instance,
     &::orion::_ObjectLocationReply_default_instance_._instance,
+    &::orion::_TaskStatusRequest_default_instance_._instance,
+    &::orion::_TaskStatusReply_default_instance_._instance,
     &::orion::_ObjectData_default_instance_._instance,
     &::orion::_Empty_default_instance_._instance,
     &::orion::_HeartbeatRequest_default_instance_._instance,
@@ -1299,78 +1378,83 @@ const char descriptor_table_protodef_orion_2eproto[] ABSL_ATTRIBUTE_SECTION_VARI
     "ontext\030\004 \001(\0132\023.orion.TraceContext\"*\n\025Obj"
     "ectLocationRequest\022\021\n\tobject_id\030\001 \001(\t\"7\n"
     "\023ObjectLocationReply\022\017\n\007node_id\030\001 \001(\t\022\017\n"
-    "\007address\030\002 \001(\t\"-\n\nObjectData\022\021\n\tobject_i"
-    "d\030\001 \001(\t\022\014\n\004data\030\002 \001(\014\"\007\n\005Empty\"\201\001\n\020Heart"
-    "beatRequest\022\017\n\007node_id\030\001 \001(\t\022\025\n\rrunning_"
-    "tasks\030\002 \001(\005\022\031\n\021available_workers\030\003 \001(\005\022*"
-    "\n\rtrace_context\030\004 \001(\0132\023.orion.TraceConte"
-    "xt\"Y\n\016HeartbeatReply\022\024\n\014acknowledged\030\001 \001"
-    "(\010\022\031\n\021please_reregister\030\002 \001(\010\022\026\n\016leader_"
-    "address\030\003 \001(\t\"0\n\rCancelRequest\022\017\n\007task_i"
-    "d\030\001 \001(\t\022\016\n\006reason\030\002 \001(\t\" \n\013CancelReply\022\021"
-    "\n\tcancelled\030\001 \001(\010\"=\n\020WhoIsLeaderReply\022\021\n"
-    "\tleader_id\030\001 \001(\t\022\026\n\016leader_address\030\002 \001(\t"
-    "\"`\n\013VoteRequest\022\014\n\004term\030\001 \001(\003\022\024\n\014candida"
-    "te_id\030\002 \001(\t\022\026\n\016last_log_index\030\003 \001(\003\022\025\n\rl"
-    "ast_log_term\030\004 \001(\003\"/\n\tVoteReply\022\014\n\004term\030"
-    "\001 \001(\003\022\024\n\014vote_granted\030\002 \001(\010\"\244\001\n\024AppendEn"
-    "triesRequest\022\014\n\004term\030\001 \001(\003\022\021\n\tleader_id\030"
-    "\002 \001(\t\022\026\n\016prev_log_index\030\003 \001(\003\022\025\n\rprev_lo"
-    "g_term\030\004 \001(\003\022%\n\007entries\030\005 \003(\0132\024.orion.Or"
-    "ionLogEntry\022\025\n\rleader_commit\030\006 \001(\003\"K\n\022Ap"
-    "pendEntriesReply\022\014\n\004term\030\001 \001(\003\022\017\n\007succes"
-    "s\030\002 \001(\010\022\026\n\016last_log_index\030\003 \001(\003\"\343\002\n\rOrio"
-    "nLogEntry\022\014\n\004term\030\001 \001(\003\022\r\n\005index\030\002 \001(\003\022)"
-    "\n\tsubmitted\030\003 \001(\0132\024.orion.TaskSubmittedH"
-    "\000\022+\n\ndispatched\030\004 \001(\0132\025.orion.TaskDispat"
-    "chedH\000\022)\n\tcompleted\030\005 \001(\0132\024.orion.TaskCo"
-    "mpletedH\000\022#\n\006failed\030\006 \001(\0132\021.orion.TaskFa"
-    "iledH\000\022)\n\tcancelled\030\007 \001(\0132\024.orion.TaskCa"
-    "ncelledH\000\0220\n\017node_registered\030\010 \001(\0132\025.ori"
-    "on.NodeRegisteredH\000\022*\n\014node_evicted\030\t \001("
-    "\0132\022.orion.NodeEvictedH\000B\004\n\002op\"J\n\rTaskSub"
-    "mitted\022$\n\010task_req\030\001 \001(\0132\022.orion.TaskReq"
-    "uest\022\023\n\013action_hash\030\002 \001(\t\"2\n\016TaskDispatc"
-    "hed\022\017\n\007task_id\030\001 \001(\t\022\017\n\007node_id\030\002 \001(\t\"A\n"
-    "\rTaskCompleted\022\017\n\007task_id\030\001 \001(\t\022\021\n\tobjec"
-    "t_id\030\002 \001(\t\022\014\n\004hash\030\003 \001(\t\"-\n\nTaskFailed\022\017"
-    "\n\007task_id\030\001 \001(\t\022\016\n\006reason\030\002 \001(\t\" \n\rTaskC"
-    "ancelled\022\017\n\007task_id\030\001 \001(\t\"2\n\016NodeRegiste"
-    "red\022\017\n\007node_id\030\001 \001(\t\022\017\n\007address\030\002 \001(\t\"\036\n"
-    "\013NodeEvicted\022\017\n\007node_id\030\001 \001(\t2\203\003\n\013Cluste"
-    "rHead\022D\n\014RegisterNode\022\032.orion.RegisterNo"
-    "deRequest\032\030.orion.RegisterNodeReply\0222\n\nS"
-    "ubmitTask\022\022.orion.TaskRequest\032\020.orion.Ta"
-    "skReply\0228\n\023ReportObjectCreated\022\023.orion.O"
-    "bjectReport\032\014.orion.Empty\022M\n\021GetObjectLo"
-    "cation\022\034.orion.ObjectLocationRequest\032\032.o"
-    "rion.ObjectLocationReply\0224\n\013WhoIsLeader\022"
-    "\014.orion.Empty\032\027.orion.WhoIsLeaderReply\022;"
-    "\n\tHeartbeat\022\027.orion.HeartbeatRequest\032\025.o"
-    "rion.HeartbeatReply2u\n\nCasService\0223\n\tFet"
-    "chBlob\022\022.orion.BlobRequest\032\020.orion.BlobC"
-    "hunk0\001\0222\n\nUploadBlob\022\020.orion.BlobChunk\032\020"
-    ".orion.BlobReply(\0012\213\001\n\013RaftService\0223\n\013Re"
-    "questVote\022\022.orion.VoteRequest\032\020.orion.Vo"
-    "teReply\022G\n\rAppendEntries\022\033.orion.AppendE"
-    "ntriesRequest\032\031.orion.AppendEntriesReply"
-    "2\270\001\n\013NodeService\0223\n\013ExecuteTask\022\022.orion."
-    "TaskRequest\032\020.orion.TaskReply\022<\n\tGetObje"
-    "ct\022\034.orion.ObjectLocationRequest\032\021.orion"
-    ".ObjectData\0226\n\nCancelTask\022\024.orion.Cancel"
-    "Request\032\022.orion.CancelReplyb\006proto3"
+    "\007address\030\002 \001(\t\"$\n\021TaskStatusRequest\022\017\n\007t"
+    "ask_id\030\001 \001(\t\"_\n\017TaskStatusReply\022\020\n\010finis"
+    "hed\030\001 \001(\010\022\023\n\013output_hash\030\002 \001(\t\022\016\n\006failed"
+    "\030\003 \001(\010\022\025\n\rerror_message\030\004 \001(\t\"-\n\nObjectD"
+    "ata\022\021\n\tobject_id\030\001 \001(\t\022\014\n\004data\030\002 \001(\014\"\007\n\005"
+    "Empty\"\201\001\n\020HeartbeatRequest\022\017\n\007node_id\030\001 "
+    "\001(\t\022\025\n\rrunning_tasks\030\002 \001(\005\022\031\n\021available_"
+    "workers\030\003 \001(\005\022*\n\rtrace_context\030\004 \001(\0132\023.o"
+    "rion.TraceContext\"Y\n\016HeartbeatReply\022\024\n\014a"
+    "cknowledged\030\001 \001(\010\022\031\n\021please_reregister\030\002"
+    " \001(\010\022\026\n\016leader_address\030\003 \001(\t\"0\n\rCancelRe"
+    "quest\022\017\n\007task_id\030\001 \001(\t\022\016\n\006reason\030\002 \001(\t\" "
+    "\n\013CancelReply\022\021\n\tcancelled\030\001 \001(\010\"=\n\020WhoI"
+    "sLeaderReply\022\021\n\tleader_id\030\001 \001(\t\022\026\n\016leade"
+    "r_address\030\002 \001(\t\"`\n\013VoteRequest\022\014\n\004term\030\001"
+    " \001(\003\022\024\n\014candidate_id\030\002 \001(\t\022\026\n\016last_log_i"
+    "ndex\030\003 \001(\003\022\025\n\rlast_log_term\030\004 \001(\003\"/\n\tVot"
+    "eReply\022\014\n\004term\030\001 \001(\003\022\024\n\014vote_granted\030\002 \001"
+    "(\010\"\244\001\n\024AppendEntriesRequest\022\014\n\004term\030\001 \001("
+    "\003\022\021\n\tleader_id\030\002 \001(\t\022\026\n\016prev_log_index\030\003"
+    " \001(\003\022\025\n\rprev_log_term\030\004 \001(\003\022%\n\007entries\030\005"
+    " \003(\0132\024.orion.OrionLogEntry\022\025\n\rleader_com"
+    "mit\030\006 \001(\003\"K\n\022AppendEntriesReply\022\014\n\004term\030"
+    "\001 \001(\003\022\017\n\007success\030\002 \001(\010\022\026\n\016last_log_index"
+    "\030\003 \001(\003\"\343\002\n\rOrionLogEntry\022\014\n\004term\030\001 \001(\003\022\r"
+    "\n\005index\030\002 \001(\003\022)\n\tsubmitted\030\003 \001(\0132\024.orion"
+    ".TaskSubmittedH\000\022+\n\ndispatched\030\004 \001(\0132\025.o"
+    "rion.TaskDispatchedH\000\022)\n\tcompleted\030\005 \001(\013"
+    "2\024.orion.TaskCompletedH\000\022#\n\006failed\030\006 \001(\013"
+    "2\021.orion.TaskFailedH\000\022)\n\tcancelled\030\007 \001(\013"
+    "2\024.orion.TaskCancelledH\000\0220\n\017node_registe"
+    "red\030\010 \001(\0132\025.orion.NodeRegisteredH\000\022*\n\014no"
+    "de_evicted\030\t \001(\0132\022.orion.NodeEvictedH\000B\004"
+    "\n\002op\"J\n\rTaskSubmitted\022$\n\010task_req\030\001 \001(\0132"
+    "\022.orion.TaskRequest\022\023\n\013action_hash\030\002 \001(\t"
+    "\"2\n\016TaskDispatched\022\017\n\007task_id\030\001 \001(\t\022\017\n\007n"
+    "ode_id\030\002 \001(\t\"A\n\rTaskCompleted\022\017\n\007task_id"
+    "\030\001 \001(\t\022\021\n\tobject_id\030\002 \001(\t\022\014\n\004hash\030\003 \001(\t\""
+    "-\n\nTaskFailed\022\017\n\007task_id\030\001 \001(\t\022\016\n\006reason"
+    "\030\002 \001(\t\" \n\rTaskCancelled\022\017\n\007task_id\030\001 \001(\t"
+    "\"2\n\016NodeRegistered\022\017\n\007node_id\030\001 \001(\t\022\017\n\007a"
+    "ddress\030\002 \001(\t\"\036\n\013NodeEvicted\022\017\n\007node_id\030\001"
+    " \001(\t2\306\003\n\013ClusterHead\022D\n\014RegisterNode\022\032.o"
+    "rion.RegisterNodeRequest\032\030.orion.Registe"
+    "rNodeReply\0222\n\nSubmitTask\022\022.orion.TaskReq"
+    "uest\032\020.orion.TaskReply\0228\n\023ReportObjectCr"
+    "eated\022\023.orion.ObjectReport\032\014.orion.Empty"
+    "\022M\n\021GetObjectLocation\022\034.orion.ObjectLoca"
+    "tionRequest\032\032.orion.ObjectLocationReply\022"
+    "4\n\013WhoIsLeader\022\014.orion.Empty\032\027.orion.Who"
+    "IsLeaderReply\022A\n\rGetTaskStatus\022\030.orion.T"
+    "askStatusRequest\032\026.orion.TaskStatusReply"
+    "\022;\n\tHeartbeat\022\027.orion.HeartbeatRequest\032\025"
+    ".orion.HeartbeatReply2u\n\nCasService\0223\n\tF"
+    "etchBlob\022\022.orion.BlobRequest\032\020.orion.Blo"
+    "bChunk0\001\0222\n\nUploadBlob\022\020.orion.BlobChunk"
+    "\032\020.orion.BlobReply(\0012\213\001\n\013RaftService\0223\n\013"
+    "RequestVote\022\022.orion.VoteRequest\032\020.orion."
+    "VoteReply\022G\n\rAppendEntries\022\033.orion.Appen"
+    "dEntriesRequest\032\031.orion.AppendEntriesRep"
+    "ly2\270\001\n\013NodeService\0223\n\013ExecuteTask\022\022.orio"
+    "n.TaskRequest\032\020.orion.TaskReply\022<\n\tGetOb"
+    "ject\022\034.orion.ObjectLocationRequest\032\021.ori"
+    "on.ObjectData\0226\n\nCancelTask\022\024.orion.Canc"
+    "elRequest\032\022.orion.CancelReplyb\006proto3"
 };
 static ::absl::once_flag descriptor_table_orion_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_orion_2eproto = {
     false,
     false,
-    3355,
+    3557,
     descriptor_table_protodef_orion_2eproto,
     "orion.proto",
     &descriptor_table_orion_2eproto_once,
     nullptr,
     0,
-    31,
+    33,
     schemas,
     file_default_instances,
     TableStruct_orion_2eproto::offsets,
@@ -5468,6 +5552,675 @@ void ObjectLocationReply::InternalSwap(ObjectLocationReply* PROTOBUF_RESTRICT PR
 }
 
 ::google::protobuf::Metadata ObjectLocationReply::GetMetadata() const {
+  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
+class TaskStatusRequest::_Internal {
+ public:
+  using HasBits =
+      decltype(::std::declval<TaskStatusRequest>()._impl_._has_bits_);
+  static constexpr ::int32_t kHasBitsOffset =
+      8 * PROTOBUF_FIELD_OFFSET(TaskStatusRequest, _impl_._has_bits_);
+};
+
+TaskStatusRequest::TaskStatusRequest(::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, TaskStatusRequest_class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  SharedCtor(arena);
+  // @@protoc_insertion_point(arena_constructor:orion.TaskStatusRequest)
+}
+PROTOBUF_NDEBUG_INLINE TaskStatusRequest::Impl_::Impl_(
+    [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
+    [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+    [[maybe_unused]] const ::orion::TaskStatusRequest& from_msg)
+      : _has_bits_{from._has_bits_},
+        _cached_size_{0},
+        task_id_(arena, from.task_id_) {}
+
+TaskStatusRequest::TaskStatusRequest(
+    ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
+    const TaskStatusRequest& from)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, TaskStatusRequest_class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  TaskStatusRequest* const _this = this;
+  (void)_this;
+  _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+  new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
+
+  // @@protoc_insertion_point(copy_constructor:orion.TaskStatusRequest)
+}
+PROTOBUF_NDEBUG_INLINE TaskStatusRequest::Impl_::Impl_(
+    [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
+    [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
+      : _cached_size_{0},
+        task_id_(arena) {}
+
+inline void TaskStatusRequest::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
+  new (&_impl_) Impl_(internal_visibility(), arena);
+}
+TaskStatusRequest::~TaskStatusRequest() {
+  // @@protoc_insertion_point(destructor:orion.TaskStatusRequest)
+  SharedDtor(*this);
+}
+inline void TaskStatusRequest::SharedDtor(MessageLite& self) {
+  TaskStatusRequest& this_ = static_cast<TaskStatusRequest&>(self);
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    this_.CheckHasBitConsistency();
+  }
+  this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
+  ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.task_id_.Destroy();
+  this_._impl_.~Impl_();
+}
+
+inline void* PROTOBUF_NONNULL TaskStatusRequest::PlacementNew_(
+    const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+    ::google::protobuf::Arena* PROTOBUF_NULLABLE arena) {
+  return ::new (mem) TaskStatusRequest(arena);
+}
+constexpr auto TaskStatusRequest::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::CopyInit(sizeof(TaskStatusRequest),
+                                            alignof(TaskStatusRequest));
+}
+constexpr auto TaskStatusRequest::InternalGenerateClassData_() {
+  return ::google::protobuf::internal::ClassDataFull{
+      ::google::protobuf::internal::ClassData{
+          &_TaskStatusRequest_default_instance_._instance,
+          &_table_.header,
+          nullptr,  // OnDemandRegisterArenaDtor
+          nullptr,  // IsInitialized
+          &TaskStatusRequest::MergeImpl,
+          ::google::protobuf::Message::GetNewImpl<TaskStatusRequest>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+          &TaskStatusRequest::SharedDtor,
+          ::google::protobuf::Message::GetClearImpl<TaskStatusRequest>(), &TaskStatusRequest::ByteSizeLong,
+              &TaskStatusRequest::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          PROTOBUF_FIELD_OFFSET(TaskStatusRequest, _impl_._cached_size_),
+          false,
+      },
+      &TaskStatusRequest::kDescriptorMethods,
+      &descriptor_table_orion_2eproto,
+      nullptr,  // tracker
+  };
+}
+
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 const
+    ::google::protobuf::internal::ClassDataFull TaskStatusRequest_class_data_ =
+        TaskStatusRequest::InternalGenerateClassData_();
+
+PROTOBUF_ATTRIBUTE_WEAK const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL
+TaskStatusRequest::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&TaskStatusRequest_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(TaskStatusRequest_class_data_.tc_table);
+  return TaskStatusRequest_class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<0, 1, 0, 39, 2>
+TaskStatusRequest::_table_ = {
+  {
+    PROTOBUF_FIELD_OFFSET(TaskStatusRequest, _impl_._has_bits_),
+    0, // no _extensions_
+    1, 0,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967294,  // skipmap
+    offsetof(decltype(_table_), field_entries),
+    1,  // num_field_entries
+    0,  // num_aux_entries
+    offsetof(decltype(_table_), field_names),  // no aux_entries
+    TaskStatusRequest_class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::orion::TaskStatusRequest>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    // string task_id = 1;
+    {::_pbi::TcParser::FastUS1,
+     {10, 0, 0,
+      PROTOBUF_FIELD_OFFSET(TaskStatusRequest, _impl_.task_id_)}},
+  }}, {{
+    65535, 65535
+  }}, {{
+    // string task_id = 1;
+    {PROTOBUF_FIELD_OFFSET(TaskStatusRequest, _impl_.task_id_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+  }},
+  // no aux_entries
+  {{
+    "\27\7\0\0\0\0\0\0"
+    "orion.TaskStatusRequest"
+    "task_id"
+  }},
+};
+PROTOBUF_NOINLINE void TaskStatusRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:orion.TaskStatusRequest)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _impl_._has_bits_[0];
+  if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+    _impl_.task_id_.ClearNonDefaultToEmpty();
+  }
+  _impl_._has_bits_.Clear();
+  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+::uint8_t* PROTOBUF_NONNULL TaskStatusRequest::_InternalSerialize(
+    const ::google::protobuf::MessageLite& base, ::uint8_t* PROTOBUF_NONNULL target,
+    ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) {
+  const TaskStatusRequest& this_ = static_cast<const TaskStatusRequest&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+::uint8_t* PROTOBUF_NONNULL TaskStatusRequest::_InternalSerialize(
+    ::uint8_t* PROTOBUF_NONNULL target,
+    ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+  const TaskStatusRequest& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    this_.CheckHasBitConsistency();
+  }
+  // @@protoc_insertion_point(serialize_to_array_start:orion.TaskStatusRequest)
+  ::uint32_t cached_has_bits = 0;
+  (void)cached_has_bits;
+
+  cached_has_bits = this_._impl_._has_bits_[0];
+  // string task_id = 1;
+  if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+    if (!this_._internal_task_id().empty()) {
+      const ::std::string& _s = this_._internal_task_id();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "orion.TaskStatusRequest.task_id");
+      target = stream->WriteStringMaybeAliased(1, _s, target);
+    }
+  }
+
+  if (ABSL_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
+    target =
+        ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+            this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:orion.TaskStatusRequest)
+  return target;
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+::size_t TaskStatusRequest::ByteSizeLong(const MessageLite& base) {
+  const TaskStatusRequest& this_ = static_cast<const TaskStatusRequest&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+::size_t TaskStatusRequest::ByteSizeLong() const {
+  const TaskStatusRequest& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  // @@protoc_insertion_point(message_byte_size_start:orion.TaskStatusRequest)
+  ::size_t total_size = 0;
+
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void)cached_has_bits;
+
+   {
+    // string task_id = 1;
+    cached_has_bits = this_._impl_._has_bits_[0];
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      if (!this_._internal_task_id().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_task_id());
+      }
+    }
+  }
+  return this_.MaybeComputeUnknownFieldsSize(total_size,
+                                             &this_._impl_._cached_size_);
+}
+
+void TaskStatusRequest::MergeImpl(::google::protobuf::MessageLite& to_msg,
+                            const ::google::protobuf::MessageLite& from_msg) {
+   auto* const _this =
+      static_cast<TaskStatusRequest*>(&to_msg);
+  auto& from = static_cast<const TaskStatusRequest&>(from_msg);
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    from.CheckHasBitConsistency();
+  }
+  // @@protoc_insertion_point(class_specific_merge_from_start:orion.TaskStatusRequest)
+  ABSL_DCHECK_NE(&from, _this);
+  ::uint32_t cached_has_bits = 0;
+  (void)cached_has_bits;
+
+  cached_has_bits = from._impl_._has_bits_[0];
+  if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+    if (!from._internal_task_id().empty()) {
+      _this->_internal_set_task_id(from._internal_task_id());
+    } else {
+      if (_this->_impl_.task_id_.IsDefault()) {
+        _this->_internal_set_task_id("");
+      }
+    }
+  }
+  _this->_impl_._has_bits_[0] |= cached_has_bits;
+  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+}
+
+void TaskStatusRequest::CopyFrom(const TaskStatusRequest& from) {
+  // @@protoc_insertion_point(class_specific_copy_from_start:orion.TaskStatusRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+
+void TaskStatusRequest::InternalSwap(TaskStatusRequest* PROTOBUF_RESTRICT PROTOBUF_NONNULL other) {
+  using ::std::swap;
+  auto* arena = GetArena();
+  ABSL_DCHECK_EQ(arena, other->GetArena());
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.task_id_, &other->_impl_.task_id_, arena);
+}
+
+::google::protobuf::Metadata TaskStatusRequest::GetMetadata() const {
+  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
+class TaskStatusReply::_Internal {
+ public:
+  using HasBits =
+      decltype(::std::declval<TaskStatusReply>()._impl_._has_bits_);
+  static constexpr ::int32_t kHasBitsOffset =
+      8 * PROTOBUF_FIELD_OFFSET(TaskStatusReply, _impl_._has_bits_);
+};
+
+TaskStatusReply::TaskStatusReply(::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, TaskStatusReply_class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  SharedCtor(arena);
+  // @@protoc_insertion_point(arena_constructor:orion.TaskStatusReply)
+}
+PROTOBUF_NDEBUG_INLINE TaskStatusReply::Impl_::Impl_(
+    [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
+    [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+    [[maybe_unused]] const ::orion::TaskStatusReply& from_msg)
+      : _has_bits_{from._has_bits_},
+        _cached_size_{0},
+        output_hash_(arena, from.output_hash_),
+        error_message_(arena, from.error_message_) {}
+
+TaskStatusReply::TaskStatusReply(
+    ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
+    const TaskStatusReply& from)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, TaskStatusReply_class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  TaskStatusReply* const _this = this;
+  (void)_this;
+  _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+  new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
+  ::memcpy(reinterpret_cast<char*>(&_impl_) +
+               offsetof(Impl_, finished_),
+           reinterpret_cast<const char*>(&from._impl_) +
+               offsetof(Impl_, finished_),
+           offsetof(Impl_, failed_) -
+               offsetof(Impl_, finished_) +
+               sizeof(Impl_::failed_));
+
+  // @@protoc_insertion_point(copy_constructor:orion.TaskStatusReply)
+}
+PROTOBUF_NDEBUG_INLINE TaskStatusReply::Impl_::Impl_(
+    [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
+    [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
+      : _cached_size_{0},
+        output_hash_(arena),
+        error_message_(arena) {}
+
+inline void TaskStatusReply::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
+  new (&_impl_) Impl_(internal_visibility(), arena);
+  ::memset(reinterpret_cast<char*>(&_impl_) +
+               offsetof(Impl_, finished_),
+           0,
+           offsetof(Impl_, failed_) -
+               offsetof(Impl_, finished_) +
+               sizeof(Impl_::failed_));
+}
+TaskStatusReply::~TaskStatusReply() {
+  // @@protoc_insertion_point(destructor:orion.TaskStatusReply)
+  SharedDtor(*this);
+}
+inline void TaskStatusReply::SharedDtor(MessageLite& self) {
+  TaskStatusReply& this_ = static_cast<TaskStatusReply&>(self);
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    this_.CheckHasBitConsistency();
+  }
+  this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
+  ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.output_hash_.Destroy();
+  this_._impl_.error_message_.Destroy();
+  this_._impl_.~Impl_();
+}
+
+inline void* PROTOBUF_NONNULL TaskStatusReply::PlacementNew_(
+    const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+    ::google::protobuf::Arena* PROTOBUF_NULLABLE arena) {
+  return ::new (mem) TaskStatusReply(arena);
+}
+constexpr auto TaskStatusReply::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::CopyInit(sizeof(TaskStatusReply),
+                                            alignof(TaskStatusReply));
+}
+constexpr auto TaskStatusReply::InternalGenerateClassData_() {
+  return ::google::protobuf::internal::ClassDataFull{
+      ::google::protobuf::internal::ClassData{
+          &_TaskStatusReply_default_instance_._instance,
+          &_table_.header,
+          nullptr,  // OnDemandRegisterArenaDtor
+          nullptr,  // IsInitialized
+          &TaskStatusReply::MergeImpl,
+          ::google::protobuf::Message::GetNewImpl<TaskStatusReply>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+          &TaskStatusReply::SharedDtor,
+          ::google::protobuf::Message::GetClearImpl<TaskStatusReply>(), &TaskStatusReply::ByteSizeLong,
+              &TaskStatusReply::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          PROTOBUF_FIELD_OFFSET(TaskStatusReply, _impl_._cached_size_),
+          false,
+      },
+      &TaskStatusReply::kDescriptorMethods,
+      &descriptor_table_orion_2eproto,
+      nullptr,  // tracker
+  };
+}
+
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 const
+    ::google::protobuf::internal::ClassDataFull TaskStatusReply_class_data_ =
+        TaskStatusReply::InternalGenerateClassData_();
+
+PROTOBUF_ATTRIBUTE_WEAK const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL
+TaskStatusReply::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&TaskStatusReply_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(TaskStatusReply_class_data_.tc_table);
+  return TaskStatusReply_class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<2, 4, 0, 54, 2>
+TaskStatusReply::_table_ = {
+  {
+    PROTOBUF_FIELD_OFFSET(TaskStatusReply, _impl_._has_bits_),
+    0, // no _extensions_
+    4, 24,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967280,  // skipmap
+    offsetof(decltype(_table_), field_entries),
+    4,  // num_field_entries
+    0,  // num_aux_entries
+    offsetof(decltype(_table_), field_names),  // no aux_entries
+    TaskStatusReply_class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::orion::TaskStatusReply>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    // string error_message = 4;
+    {::_pbi::TcParser::FastUS1,
+     {34, 1, 0,
+      PROTOBUF_FIELD_OFFSET(TaskStatusReply, _impl_.error_message_)}},
+    // bool finished = 1;
+    {::_pbi::TcParser::SingularVarintNoZag1<bool, offsetof(TaskStatusReply, _impl_.finished_), 2>(),
+     {8, 2, 0,
+      PROTOBUF_FIELD_OFFSET(TaskStatusReply, _impl_.finished_)}},
+    // string output_hash = 2;
+    {::_pbi::TcParser::FastUS1,
+     {18, 0, 0,
+      PROTOBUF_FIELD_OFFSET(TaskStatusReply, _impl_.output_hash_)}},
+    // bool failed = 3;
+    {::_pbi::TcParser::SingularVarintNoZag1<bool, offsetof(TaskStatusReply, _impl_.failed_), 3>(),
+     {24, 3, 0,
+      PROTOBUF_FIELD_OFFSET(TaskStatusReply, _impl_.failed_)}},
+  }}, {{
+    65535, 65535
+  }}, {{
+    // bool finished = 1;
+    {PROTOBUF_FIELD_OFFSET(TaskStatusReply, _impl_.finished_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kBool)},
+    // string output_hash = 2;
+    {PROTOBUF_FIELD_OFFSET(TaskStatusReply, _impl_.output_hash_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // bool failed = 3;
+    {PROTOBUF_FIELD_OFFSET(TaskStatusReply, _impl_.failed_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kBool)},
+    // string error_message = 4;
+    {PROTOBUF_FIELD_OFFSET(TaskStatusReply, _impl_.error_message_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+  }},
+  // no aux_entries
+  {{
+    "\25\0\13\0\15\0\0\0"
+    "orion.TaskStatusReply"
+    "output_hash"
+    "error_message"
+  }},
+};
+PROTOBUF_NOINLINE void TaskStatusReply::Clear() {
+// @@protoc_insertion_point(message_clear_start:orion.TaskStatusReply)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x00000003U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      _impl_.output_hash_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      _impl_.error_message_.ClearNonDefaultToEmpty();
+    }
+  }
+  ::memset(&_impl_.finished_, 0, static_cast<::size_t>(
+      reinterpret_cast<char*>(&_impl_.failed_) -
+      reinterpret_cast<char*>(&_impl_.finished_)) + sizeof(_impl_.failed_));
+  _impl_._has_bits_.Clear();
+  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+::uint8_t* PROTOBUF_NONNULL TaskStatusReply::_InternalSerialize(
+    const ::google::protobuf::MessageLite& base, ::uint8_t* PROTOBUF_NONNULL target,
+    ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) {
+  const TaskStatusReply& this_ = static_cast<const TaskStatusReply&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+::uint8_t* PROTOBUF_NONNULL TaskStatusReply::_InternalSerialize(
+    ::uint8_t* PROTOBUF_NONNULL target,
+    ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+  const TaskStatusReply& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    this_.CheckHasBitConsistency();
+  }
+  // @@protoc_insertion_point(serialize_to_array_start:orion.TaskStatusReply)
+  ::uint32_t cached_has_bits = 0;
+  (void)cached_has_bits;
+
+  cached_has_bits = this_._impl_._has_bits_[0];
+  // bool finished = 1;
+  if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+    if (this_._internal_finished() != 0) {
+      target = stream->EnsureSpace(target);
+      target = ::_pbi::WireFormatLite::WriteBoolToArray(
+          1, this_._internal_finished(), target);
+    }
+  }
+
+  // string output_hash = 2;
+  if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+    if (!this_._internal_output_hash().empty()) {
+      const ::std::string& _s = this_._internal_output_hash();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "orion.TaskStatusReply.output_hash");
+      target = stream->WriteStringMaybeAliased(2, _s, target);
+    }
+  }
+
+  // bool failed = 3;
+  if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+    if (this_._internal_failed() != 0) {
+      target = stream->EnsureSpace(target);
+      target = ::_pbi::WireFormatLite::WriteBoolToArray(
+          3, this_._internal_failed(), target);
+    }
+  }
+
+  // string error_message = 4;
+  if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+    if (!this_._internal_error_message().empty()) {
+      const ::std::string& _s = this_._internal_error_message();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "orion.TaskStatusReply.error_message");
+      target = stream->WriteStringMaybeAliased(4, _s, target);
+    }
+  }
+
+  if (ABSL_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
+    target =
+        ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+            this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:orion.TaskStatusReply)
+  return target;
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+::size_t TaskStatusReply::ByteSizeLong(const MessageLite& base) {
+  const TaskStatusReply& this_ = static_cast<const TaskStatusReply&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+::size_t TaskStatusReply::ByteSizeLong() const {
+  const TaskStatusReply& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  // @@protoc_insertion_point(message_byte_size_start:orion.TaskStatusReply)
+  ::size_t total_size = 0;
+
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void)cached_has_bits;
+
+  ::_pbi::Prefetch5LinesFrom7Lines(&this_);
+  cached_has_bits = this_._impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x0000000fU)) {
+    // string output_hash = 2;
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      if (!this_._internal_output_hash().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_output_hash());
+      }
+    }
+    // string error_message = 4;
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!this_._internal_error_message().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_error_message());
+      }
+    }
+    // bool finished = 1;
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+      if (this_._internal_finished() != 0) {
+        total_size += 2;
+      }
+    }
+    // bool failed = 3;
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+      if (this_._internal_failed() != 0) {
+        total_size += 2;
+      }
+    }
+  }
+  return this_.MaybeComputeUnknownFieldsSize(total_size,
+                                             &this_._impl_._cached_size_);
+}
+
+void TaskStatusReply::MergeImpl(::google::protobuf::MessageLite& to_msg,
+                            const ::google::protobuf::MessageLite& from_msg) {
+   auto* const _this =
+      static_cast<TaskStatusReply*>(&to_msg);
+  auto& from = static_cast<const TaskStatusReply&>(from_msg);
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    from.CheckHasBitConsistency();
+  }
+  // @@protoc_insertion_point(class_specific_merge_from_start:orion.TaskStatusReply)
+  ABSL_DCHECK_NE(&from, _this);
+  ::uint32_t cached_has_bits = 0;
+  (void)cached_has_bits;
+
+  cached_has_bits = from._impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x0000000fU)) {
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      if (!from._internal_output_hash().empty()) {
+        _this->_internal_set_output_hash(from._internal_output_hash());
+      } else {
+        if (_this->_impl_.output_hash_.IsDefault()) {
+          _this->_internal_set_output_hash("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!from._internal_error_message().empty()) {
+        _this->_internal_set_error_message(from._internal_error_message());
+      } else {
+        if (_this->_impl_.error_message_.IsDefault()) {
+          _this->_internal_set_error_message("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+      if (from._internal_finished() != 0) {
+        _this->_impl_.finished_ = from._impl_.finished_;
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+      if (from._internal_failed() != 0) {
+        _this->_impl_.failed_ = from._impl_.failed_;
+      }
+    }
+  }
+  _this->_impl_._has_bits_[0] |= cached_has_bits;
+  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+}
+
+void TaskStatusReply::CopyFrom(const TaskStatusReply& from) {
+  // @@protoc_insertion_point(class_specific_copy_from_start:orion.TaskStatusReply)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+
+void TaskStatusReply::InternalSwap(TaskStatusReply* PROTOBUF_RESTRICT PROTOBUF_NONNULL other) {
+  using ::std::swap;
+  auto* arena = GetArena();
+  ABSL_DCHECK_EQ(arena, other->GetArena());
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.output_hash_, &other->_impl_.output_hash_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.error_message_, &other->_impl_.error_message_, arena);
+  ::google::protobuf::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(TaskStatusReply, _impl_.failed_)
+      + sizeof(TaskStatusReply::_impl_.failed_)
+      - PROTOBUF_FIELD_OFFSET(TaskStatusReply, _impl_.finished_)>(
+          reinterpret_cast<char*>(&_impl_.finished_),
+          reinterpret_cast<char*>(&other->_impl_.finished_));
+}
+
+::google::protobuf::Metadata TaskStatusReply::GetMetadata() const {
   return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
 }
 // ===================================================================

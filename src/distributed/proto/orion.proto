@@ -11,7 +11,8 @@ service ClusterHead {
   // Raft phase-1:
   //   Clients call WhoIsLeader to discover the current authoritative head.
   rpc WhoIsLeader(Empty) returns (WhoIsLeaderReply);
-
+ 
+  rpc GetTaskStatus(TaskStatusRequest) returns (TaskStatusReply);
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatReply);
 }
 
@@ -112,6 +113,17 @@ message ObjectLocationRequest {
 message ObjectLocationReply {
   string node_id = 1;
   string address = 2;
+}
+ 
+message TaskStatusRequest {
+  string task_id = 1;
+}
+ 
+message TaskStatusReply {
+  bool finished = 1;
+  string output_hash = 2;
+  bool failed = 3;
+  string error_message = 4;
 }
 
 message ObjectData {

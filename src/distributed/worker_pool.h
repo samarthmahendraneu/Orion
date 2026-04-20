@@ -64,8 +64,14 @@ private:
             }
 
             // Cleanup sandbox before task
-            fs::remove_all(my_sandbox);
-            fs::create_directories(my_sandbox);
+            try {
+                if (fs::exists(my_sandbox)) {
+                    fs::remove_all(my_sandbox);
+                }
+                fs::create_directories(my_sandbox);
+            } catch (const std::exception& e) {
+                std::cerr << "[WorkerPool] sandbox cleanup warning: " << e.what() << "\n";
+            }
 
             try {
                 task(my_sandbox);

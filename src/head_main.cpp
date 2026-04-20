@@ -22,6 +22,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <future>
 
 #include <grpcpp/grpcpp.h>
 
@@ -45,13 +46,14 @@ public:
                     orion::distributed::ClusterScheduler& scheduler,
                     orion::distributed::RaftConsensus&    raft,
                     orion::distributed::CasStore&         cas,
-                    const std::string&                    self_addr)
-        : registry_(registry), scheduler_(scheduler), raft_(raft), cas_(cas), self_addr_(self_addr) {}
+                    const std::string&                    self_addr,
+                    bool                                  standalone = false)
+        : registry_(registry), scheduler_(scheduler), raft_(raft), cas_(cas), self_addr_(self_addr), standalone_(standalone) {}
 
     grpc::Status RegisterNode(grpc::ServerContext*,
                               const orion::RegisterNodeRequest* req,
                               orion::RegisterNodeReply* reply) override {
-        if (!raft_.is_leader()) {
+        if (!standalone_ && !raft_.is_leader()) {
             reply->set_success(false);
             reply->set_leader_address(raft_.leader_address());
             return grpc::Status::OK;
@@ -71,7 +73,7 @@ public:
                             orion::TaskReply* reply) override {
         orion::observability::counters::tasks_submitted().inc();
         
-        if (!raft_.is_leader()) {
+        if (!standalone_ && !raft_.is_leader()) {
             reply->set_accepted(false);
             std::string leader = raft_.leader_address();
             if (!leader.empty() && leader != self_addr_) {
@@ -123,7 +125,7 @@ public:
         }
 
         orion::OrionLogEntry entry;
-        entry.set_term(raft_.current_term());
+        entry.set_term(standalone_ ? 1 : raft_.current_term());
         auto* sub = entry.mutable_submitted();
         sub->mutable_task_req()->CopyFrom(*req);
         
@@ -131,10 +133,22 @@ public:
         span->context().to_proto(sub->mutable_task_req()->mutable_trace_context());
         sub->set_action_hash(action_hash);
 
-        bool replicated = raft_.replicate(entry);
+        bool replicated = false;
+        if (standalone_) {
+            // HIGH-PERFORMANCE PATH: Bypass Raft completely
+            scheduler_.apply_log_entry(entry);
+            replicated = true;
+        } else {
+            // RELIABILITY PATH: Replicate via Raft
+            std::future<bool> replicated_fut = raft_.replicate(entry);
+            if (replicated_fut.valid()) {
+               replicated = replicated_fut.get();
+            }
+        }
         reply->set_accepted(replicated);
         
         span->set_attribute("replicated", replicated ? "true" : "false");
+        span->set_attribute("standalone", standalone_ ? "true" : "false");
         span->end();
         orion::observability::g_current_trace_id = "";
         return grpc::Status::OK;
@@ -144,7 +158,7 @@ public:
                                      const orion::ObjectReport* req,
                                      orion::Empty*) override {
 
-        if (!raft_.is_leader()) {
+        if (!standalone_ && !raft_.is_leader()) {
             // NodeRuntime will catch UNAVAILABLE and re-register to get leader hint
             return grpc::Status(grpc::StatusCode::UNAVAILABLE,
                                 "Not leader: redirection required",
@@ -189,7 +203,7 @@ public:
                            orion::HeartbeatReply* reply) override {
         orion::observability::counters::heartbeats_received().inc();
 
-        if (!raft_.is_leader()) {
+        if (!standalone_ && !raft_.is_leader()) {
             reply->set_acknowledged(false);
             reply->set_please_reregister(true);
             reply->set_leader_address(raft_.leader_address());
@@ -210,10 +224,32 @@ public:
         return grpc::Status::OK;
     }
 
-    grpc::Status WhoIsLeader(grpc::ServerContext*,
-                             const orion::Empty*,
-                             orion::WhoIsLeaderReply* reply) override {
-        return raft_.WhoIsLeader(reply);
+    grpc::Status GetTaskStatus(grpc::ServerContext* /*context*/,
+                               const ::orion::TaskStatusRequest* req,
+                               ::orion::TaskStatusReply* reply) override
+    {
+        std::string hash = scheduler_.get_canonical_hash(req->task_id());
+        if (!hash.empty()) {
+            reply->set_finished(true);
+            reply->set_output_hash(hash);
+            return grpc::Status::OK;
+        }
+
+        if (scheduler_.is_failed(req->task_id())) {
+            reply->set_finished(true);
+            reply->set_failed(true);
+            reply->set_error_message("Task or dependency failed in scheduler.");
+            return grpc::Status::OK;
+        }
+
+        reply->set_finished(false);
+        return grpc::Status::OK;
+    }
+ 
+    grpc::Status WhoIsLeader(grpc::ServerContext* /*context*/,
+                             const ::orion::Empty* /*req*/,
+                             ::orion::WhoIsLeaderReply* reply) override
+    {    return raft_.WhoIsLeader(reply);
     }
 
 private:
@@ -222,6 +258,7 @@ private:
     orion::distributed::RaftConsensus&    raft_;
     orion::distributed::CasStore&         cas_;
     std::string                           self_addr_;
+    bool                                  standalone_;
 
     std::mutex mu_;
 };
@@ -285,10 +322,26 @@ static std::string build_cluster_status_json(
 
 // ── main ─────────────────────────────────────────────────────────────────────
 int main(int argc, char* argv[]) {
-    std::string port           = (argc > 1) ? argv[1] : "50050";
-    int         metrics_port   = (argc > 2) ? std::stoi(argv[2]) : 9090;
-    std::string node_id        = (argc > 3) ? argv[3] : ("head-" + port);
-    std::string reachable_addr = (argc > 4) ? argv[4] : ("127.0.0.1:" + port);
+    std::string port           = "50050";
+    int         metrics_port   = 9090;
+    std::string node_id        = "head-50050";
+    std::string reachable_addr = "127.0.0.1:50050";
+    bool        standalone     = false;
+
+    std::vector<std::string> pos_args;
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--standalone") {
+            standalone = true;
+        } else {
+            pos_args.push_back(arg);
+        }
+    }
+
+    if (pos_args.size() >= 1) port = pos_args[0];
+    if (pos_args.size() >= 2) metrics_port = std::stoi(pos_args[1]);
+    if (pos_args.size() >= 3) node_id = pos_args[2];
+
     std::string server_address = "0.0.0.0:" + port;
 
     orion::distributed::NodeRegistry registry;
@@ -303,6 +356,7 @@ int main(int argc, char* argv[]) {
     // Parse peers: head-2:127.0.0.1:50051 head-3:127.0.0.1:50052
     for (int i = 5; i < argc; ++i) {
         std::string peer_str = argv[i];
+        if (peer_str == "--standalone") continue;
         size_t colon = peer_str.find(':');
         if (colon != std::string::npos) {
             raft_cfg.peers.push_back({peer_str.substr(0, colon), peer_str.substr(colon + 1)});
@@ -310,11 +364,13 @@ int main(int argc, char* argv[]) {
     }
     
     orion::distributed::RaftConsensus raft(raft_cfg, scheduler);
-    raft.start();
+    if (!standalone) {
+        raft.start();
+    }
     scheduler.start_background_monitoring();
 
-    orion::distributed::CasStore cas;
-    HeadServiceImpl service(registry, scheduler, raft, cas, raft_cfg.address);
+    orion::distributed::CasStore cas("./storage/cas", std::chrono::seconds(120), 200);
+    HeadServiceImpl service(registry, scheduler, raft, cas, raft_cfg.address, standalone);
     RaftServiceImpl raft_service(raft);
 
     orion::distributed::CasServiceImpl cas_service(cas);
@@ -381,10 +437,25 @@ int main(int argc, char* argv[]) {
         }
     });
 
+    // ── Cache-cleanup thread ────────────────────────────────────────────────
+    // Periodically sweeps the CAS to enforce TTL and LRU eviction.
+    std::thread cleanup_worker([&] {
+        while (running.load()) {
+            LOG_INFO("ClusterHead", "cache_sweep_starting", {});
+            cas.sweep();
+            
+            // Sleep in small increments for the stress test
+            for (int i = 0; i < 10 && running.load(); ++i) {
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
+        }
+    });
+
     server->Wait();
     running.store(false);
     metrics_worker.join();
     cancel_worker.join();
+    cleanup_worker.join();
     http.stop();
     return 0;
 }

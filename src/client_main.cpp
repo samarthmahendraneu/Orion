@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <thread>
 #include <chrono>
+#include <set>
 
 #include <grpcpp/grpcpp.h>
 #include "distributed/generated/orion.grpc.pb.h"
@@ -28,8 +29,11 @@ struct DAGNode {
 
     std::mutex mu;
     bool started = false;
-    std::shared_future<bool> future;
+    std::shared_future<std::string> future;
 };
+
+// Generic file hashing logic simplified.
+// No extra header scanning needed as we upload the entire folder context.
 
 // Compute Merkle hashes recursively
 std::string compute_action_hash(const std::map<std::string, std::unique_ptr<DAGNode>>& nodes,
@@ -38,12 +42,21 @@ std::string compute_action_hash(const std::map<std::string, std::unique_ptr<DAGN
     if (cache.count(target)) return cache[target];
 
     auto it = nodes.find(target);
-    if (it == nodes.end() || it->second->command.empty()) {
+    bool is_leaf = (it == nodes.end()) || (it->second->command.empty() && it->second->dep_names.empty());
+
+    if (is_leaf) {
         // It's a leaf file, hash its contents if it exists locally
         if (fs::exists(target)) {
             std::ifstream in(target, std::ios::binary);
             std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-            std::string h = "FILE:" + orion::distributed::compute_sha256(content);
+            
+            // Simplified content-based hashing for all files.
+            // The "Global Context" strategy will ensure all necessary headers
+            // are uploaded to the CAS and available in the sandbox.
+            std::string header_hash_input = content;
+            // No more recursive header scanning - we rely on global context uplift.
+
+            std::string h = "FILE:" + orion::distributed::compute_sha256(header_hash_input);
             cache[target] = h;
             return h;
         } else {
@@ -64,16 +77,16 @@ std::string compute_action_hash(const std::map<std::string, std::unique_ptr<DAGN
     return h;
 }
 
-// Perform gRPC submission with Raft redirection
-bool grpc_submit(DAGNode* node, std::string current_target, 
-                 const std::string& expected_hash,
-                 const std::map<std::string, std::string>& hashes,
-                 std::shared_ptr<orion::distributed::CasClient> cas_client) {
-    auto channel = grpc::CreateChannel(current_target, grpc::InsecureChannelCredentials());
-    auto stub = orion::ClusterHead::NewStub(channel);
-
+// Perform gRPC submission and poll for completion
+std::string grpc_submit(DAGNode* node,
+                        orion::ClusterHead::Stub* stub,
+                        const std::string& expected_hash,
+                        const std::map<std::string, std::string>& hashes,
+                        std::shared_ptr<orion::distributed::CasClient> cas_client,
+                        int max_retries,
+                        int timeout_sec) {
     int retries = 0;
-    while (retries < 15) {
+    while (retries < max_retries) {
         orion::TaskRequest req;
         req.set_task_id(node->id);
         req.set_function_name("shell_execute");
@@ -83,67 +96,96 @@ bool grpc_submit(DAGNode* node, std::string current_target,
         req.set_expected_hash(expected_hash);
         req.set_working_dir(node->working_dir);
 
-        // V2: Populate input map from dependencies
+        // V2: Populate input map with ALL source/header files (Global Context strategy)
+        // This ensures headers like lua.h are always found regardless of include flags.
+        for (auto const& [file_path, file_hash] : hashes) {
+            std::string ext = fs::path(file_path).extension().string();
+            if (ext == ".c" || ext == ".h" || ext == ".cpp" || ext == ".hpp") {
+                (*req.mutable_input_map())[file_path] = file_hash;
+            }
+        }
+        
+        // Also ensure direct computed dependencies are listed
         for (auto* dep : node->deps) {
-            if (dep->command.empty()) {
-                // Leaf file (source) - must be uploaded to CAS
-                if (hashes.count(dep->id)) {
-                    (*req.mutable_input_map())[dep->id] = hashes.at(dep->id);
-                }
-            } else {
-                // Computed dependency - head already knows its canonical hash from previous steps
-                // We just list the ID, head's scheduler will resolve the hash during dispatch.
+            if (!dep->command.empty() || !dep->dep_names.empty()) {
                 req.add_dep_ids(dep->id);
             }
         }
 
         orion::TaskReply reply;
         grpc::ClientContext ctx;
-        ctx.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(20));
+        ctx.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(timeout_sec));
         
         grpc::Status status = stub->SubmitTask(&ctx, req, &reply);
         if (status.ok()) {
             if (reply.accepted()) {
                 if (!reply.output_hash().empty()) {
-                    std::cout << "[Orion] Task " << node->id << ": CACHE HIT (hash=" << reply.output_hash().substr(0, 16) << ")\n";
-                    return true;
-                } else {
-                    std::cout << "[Orion] Task " << node->id << ": EXECUTING...\n";
-                    return false;
+                    return reply.output_hash(); // Cache hit
                 }
-            }
-            if (!reply.leader_address().empty() && reply.leader_address() != current_target) {
-                current_target = reply.leader_address();
-                channel = grpc::CreateChannel(current_target, grpc::InsecureChannelCredentials());
-                stub = orion::ClusterHead::NewStub(channel);
-                // Also update cas_client's internally? 
-                // For this POC we'll assume head has a unified load balanced service or just retry.
-                continue;
+                
+                // Poll for completion
+                while (true) {
+                    orion::TaskStatusRequest stat_req;
+                    stat_req.set_task_id(node->id);
+                    orion::TaskStatusReply stat_reply;
+                    grpc::ClientContext stat_ctx;
+                    stat_ctx.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+                    
+                    grpc::Status s = stub->GetTaskStatus(&stat_ctx, stat_req, &stat_reply);
+                    if (s.ok() && stat_reply.finished()) {
+                        if (stat_reply.failed()) {
+                            throw std::runtime_error("Task " + node->id + " failed: " + stat_reply.error_message());
+                        }
+                        return stat_reply.output_hash();
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
             }
         }
         
         retries++;
-        std::this_thread::sleep_for(std::chrono::milliseconds(200 + (std::rand() % 100)));
     }
-    throw std::runtime_error("SubmitTask rejected after 15 retries for node " + node->id);
+    throw std::runtime_error("SubmitTask rejected or timed out for node " + node->id);
 }
 
-std::shared_future<bool> submit_node(DAGNode* node, const std::string& head_addr, 
-                                     const std::map<std::string, std::string>& hashes,
-                                     std::shared_ptr<orion::distributed::CasClient> cas_client) {
+// Submit a single node recursively
+std::shared_future<std::string> submit_node(DAGNode* node, 
+                                            orion::ClusterHead::Stub* stub,
+                                            const std::map<std::string, std::string>& hashes,
+                                            std::shared_ptr<orion::distributed::CasClient> cas_client,
+                                            int retries,
+                                            int timeout) {
     std::lock_guard<std::mutex> lock(node->mu);
     if (node->started) return node->future;
-    
     node->started = true;
-    node->future = std::async(std::launch::async, [=, &hashes]() -> bool {
-        std::vector<std::shared_future<bool>> dep_futs;
+    
+    node->future = std::async(std::launch::async, [=, &hashes]() -> std::string {
+        std::vector<std::shared_future<std::string>> dep_futs;
         for (auto* dep : node->deps) {
-            dep_futs.push_back(submit_node(dep, head_addr, hashes, cas_client));
+            dep_futs.push_back(submit_node(dep, stub, hashes, cas_client, retries, timeout));
         }
-        for (auto& f : dep_futs) f.get(); // wait for dependencies
+        
+        std::string last_dep_hash = "";
+        for (auto& f : dep_futs) {
+            last_dep_hash = f.get(); // wait for dependencies
+        }
 
-        if (node->command.empty()) return true; // Leaf file, no task to run
-        return grpc_submit(node, head_addr, hashes.at(node->id), hashes, cas_client);
+        if (node->command.empty()) {
+            if (node->dep_names.empty()) {
+                // True leaf file
+                auto h_it = hashes.find(node->id);
+                if (h_it == hashes.end()) throw std::runtime_error("No hash for leaf " + node->id);
+                return h_it->second;
+            } else {
+                // Virtual/Phoney target - just return the action hash or last dep hash
+                auto h_it = hashes.find(node->id);
+                return (h_it != hashes.end()) ? h_it->second : last_dep_hash;
+            }
+        }
+        
+        auto h_it = hashes.find(node->id);
+        if (h_it == hashes.end()) throw std::runtime_error("No hash for task " + node->id);
+        return grpc_submit(node, stub, h_it->second, hashes, cas_client, retries, timeout);
     });
     return node->future;
 }
@@ -151,11 +193,17 @@ std::shared_future<bool> submit_node(DAGNode* node, const std::string& head_addr
 int main(int argc, char* argv[]) {
     std::string head_addr = "127.0.0.1:50050";
     std::string dir = ".";
+    std::string custom_target = "";
+    int max_retries = 15;
+    int timeout_sec = 20;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--head" && i + 1 < argc) head_addr = argv[++i];
         else if (arg == "--dir" && i + 1 < argc) dir = argv[++i];
+        else if (arg == "--retries" && i + 1 < argc) max_retries = std::stoi(argv[++i]);
+        else if (arg == "--timeout" && i + 1 < argc) timeout_sec = std::stoi(argv[++i]);
+        else if (arg[0] != '-') custom_target = arg;
     }
 
     fs::path abs_dir = fs::absolute(dir);
@@ -169,6 +217,7 @@ int main(int argc, char* argv[]) {
     std::cout << "[Orion CLI] Parsing " << makefile_path << "...\n";
 
     std::map<std::string, std::unique_ptr<DAGNode>> nodes;
+    std::map<std::string, std::string> vars;
     std::string first_target = "";
 
     std::ifstream file(makefile_path);
@@ -176,6 +225,7 @@ int main(int argc, char* argv[]) {
     DAGNode* current_node = nullptr;
 
     std::regex target_regex("^([a-zA-Z0-9_\\-\\./]+)\\s*:\\s*(.*)$");
+    std::regex var_regex("^([a-zA-Z0-9_]+)\\s*=\\s*(.*)$");
 
     while (std::getline(file, line)) {
         if (line.empty() || line[0] == '#') continue;
@@ -194,15 +244,30 @@ int main(int argc, char* argv[]) {
             std::stringstream ss(deps_str);
             std::string dep;
             while (ss >> dep) {
+                // Expand variables in dependencies if any (uncommon but possible)
                 current_node->dep_names.push_back(dep);
             }
+        } else if (std::regex_match(line, match, var_regex)) {
+            vars[match[1]] = match[2];
+            current_node = nullptr;
         } else if (line[0] == '\t' && current_node) {
-            current_node->command = line.substr(1); // strip tab
+            std::string cmd = line.substr(1);
+            // Simple variable expansion $(VAR)
+            for (auto const& [name, val] : vars) {
+                std::string placeholder = "$(" + name + ")";
+                size_t pos = 0;
+                while ((pos = cmd.find(placeholder, pos)) != std::string::npos) {
+                    cmd.replace(pos, placeholder.length(), val);
+                    pos += val.length();
+                }
+            }
+            current_node->command = cmd;
         }
     }
 
-    if (first_target.empty()) {
-        std::cerr << "Error: No targets found in Makefile\n";
+    std::string target = custom_target.empty() ? first_target : custom_target;
+    if (!nodes.count(target)) {
+        std::cerr << "Error: Target '" << target << "' not found in Makefile\n";
         return 1;
     }
 
@@ -219,43 +284,55 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "[Orion CLI] Target: " << first_target << " | Nodes: " << nodes.size() << "\n";
-
-    // Hash Action Merkle Tree
+    for (auto const& [name, node] : nodes) {
+        if (!node->command.empty()) {
+            std::cout << "  Task: " << name << " [" << node->command.substr(0, 32) << "...]\n";
+            for (auto* d : node->deps) std::cout << "    -> " << d->id << "\n";
+        }
+    }
     std::map<std::string, std::string> action_hashes;
     compute_action_hash(nodes, first_target, action_hashes);
 
     auto start_time = std::chrono::steady_clock::now();
 
-    // V2: Initialize CAS Client
-    auto cas_channel = grpc::CreateChannel(head_addr, grpc::InsecureChannelCredentials());
-    auto cas_client = std::make_shared<orion::distributed::CasClient>(cas_channel);
+    // V2: Initialize CAS Client and Cluster Stub
+    auto head_channel = grpc::CreateChannel(head_addr, grpc::InsecureChannelCredentials());
+    auto cas_client = std::make_shared<orion::distributed::CasClient>(head_channel);
+    auto head_stub = orion::ClusterHead::NewStub(head_channel);
 
-    // V2: Pre-upload all leaf nodes sequentially to avoid gRPC connection exhaustion
-    std::cout << "[Orion CLI] Uploading source files to CAS...\n";
-    for (auto& [id, node] : nodes) {
-        if (node->command.empty() && fs::exists(id)) {
-            std::string hash = cas_client->upload_blob(id);
-            if (!hash.empty()) {
-                action_hashes[id] = hash; // Stuff leaf hashes here for convenience
-            } else {
-                std::cerr << "[Orion CLI] WARNING: Failed to upload source file " << id << "\n";
+    // V2: Pre-scan and Uplift all files in the project folder
+    std::cout << "[Orion CLI] Uplifting all project files to CAS (Global Context)...\n";
+    for (const auto& entry : fs::recursive_directory_iterator(abs_dir)) {
+        if (entry.is_regular_file()) {
+            std::string ext = entry.path().extension().string();
+            // Uplift all source/header files to ensure complete build context
+            if (ext == ".c" || ext == ".h" || ext == ".cpp" || ext == ".hpp" || ext == ".o" || ext == ".a") {
+                std::string h = cas_client->upload_blob(entry.path().string());
+                if (!h.empty()) {
+                    fs::path rel = fs::relative(entry.path(), abs_dir);
+                    action_hashes[rel.string()] = h;
+                }
             }
         }
     }
 
     // Submit recursively
-    bool final_cached = submit_node(nodes[first_target].get(), head_addr, action_hashes, cas_client).get();
+    std::string final_hash = "";
+    try {
+        final_hash = submit_node(nodes[target].get(), head_stub.get(), action_hashes, cas_client, max_retries, timeout_sec).get();
+    } catch (const std::exception& e) {
+        std::cerr << "[Orion CLI] Build failed with exception: " << e.what() << "\n";
+        return 1;
+    }
 
-    if (!final_cached && !first_target.empty()) {
-        double wait_seconds = 0.0;
-        while (!fs::exists(fs::path(dir) / first_target) && wait_seconds < 600.0) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
-            wait_seconds += 0.2;
-        }
-        if (!fs::exists(fs::path(dir) / first_target)) {
-            std::cerr << "[Orion CLI] ERROR: Timed out waiting for final artifact "
-                      << (fs::path(dir) / first_target) << "\n";
-            return 1;
+    if (!final_hash.empty()) {
+        fs::path dest = fs::path(dir) / target;
+        if (!fs::exists(dest)) {
+            std::cout << "[Orion CLI] Downloading final artifact: " << target << " (" << final_hash.substr(0,16) << ")\n";
+            if (!cas_client->fetch_blob(final_hash, dest)) {
+                std::cerr << "[Orion CLI] ERROR: Failed to download final artifact.\n";
+                return 1;
+            }
         }
     }
 
@@ -263,10 +340,10 @@ int main(int argc, char* argv[]) {
     double ms = std::chrono::duration<double, std::milli>(end_time - start_time).count();
 
     std::cout << "----------------------------------------\n";
-    if (final_cached) {
-         std::cout << "[Orion CLI] Build completed perfectly. (CACHE HIT)\n";
+    if (!final_hash.empty()) {
+         std::cout << "[Orion CLI] Build completed successfully.\n";
     } else {
-         std::cout << "[Orion CLI] Build completed. (EXECUTED)\n";
+         std::cout << "[Orion CLI] Build failed.\n";
     }
     std::cout << "[Orion CLI] Total Time: " << ms << " ms\n";
 

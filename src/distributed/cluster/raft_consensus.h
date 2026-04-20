@@ -9,6 +9,7 @@
 #include <atomic>
 #include <random>
 #include <condition_variable>
+#include <future>
 
 #include "../generated/orion.grpc.pb.h"
 #include "cluster_scheduler.h"
@@ -42,7 +43,8 @@ public:
     grpc::Status WhoIsLeader(WhoIsLeaderReply* reply);
 
     // Client Mutator
-    bool replicate(const OrionLogEntry& entry);
+    // V2 Optimization: Returns a future to allow batching without blocking the gRPC thread
+    std::future<bool> replicate(const OrionLogEntry& entry);
 
     bool is_leader() const { return role_ == RaftRole::LEADER; }
     int64_t current_term() const { return current_term_.load(); }
@@ -55,6 +57,14 @@ private:
     void start_election_(std::unique_lock<std::mutex>& lock);
     void become_leader_();
     void become_follower_(int64_t term, const std::string& leader_id);
+
+    // Batching logic
+    struct LogEntryBatch {
+        OrionLogEntry entry;
+        std::promise<bool> promise;
+    };
+    void run_batch_worker_(std::stop_token st);
+    void flush_batch_();
 
     // Helpers
     std::chrono::milliseconds next_election_timeout_();
@@ -83,6 +93,12 @@ private:
 
     std::unique_ptr<std::jthread> election_timer_thread_;
     std::unique_ptr<std::jthread> heartbeat_thread_;
+    std::unique_ptr<std::jthread> batch_worker_;
+
+    // Batching state
+    std::vector<std::unique_ptr<LogEntryBatch>> pending_batch_;
+    static constexpr size_t kMaxBatchSize = 128;
+    static constexpr std::chrono::milliseconds kMaxBatchWait = std::chrono::milliseconds(10);
 
     std::map<std::string, std::unique_ptr<orion::RaftService::Stub>> stubs_;
 

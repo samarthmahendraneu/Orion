@@ -101,6 +101,11 @@ public:
             // 1. FETCH DEPENDENCIES
             for (auto const& [name, hash] : ctx->inputs) {
                 fs::path dest = sandbox_dir / name;
+                // Ensure parent directory exists for files in subdirs
+                if (dest.has_parent_path()) {
+                    fs::create_directories(dest.parent_path());
+                }
+
                 if (!cas_client_->fetch_blob(hash, dest)) {
                     LOG_ERROR("NodeService", "fetch_failed", {{"task_id", ctx->id}, {"file", name}});
                     node_.report_task_failed(ctx->id, "dependency-fetch-failed");
@@ -112,24 +117,41 @@ public:
             bool success = false;
             std::string output_filename;
             
+            // Build arguments for the registered function
+            std::vector<std::any> fn_args;
             if (ctx->function == "shell_execute") {
-                // Heuristic: Orion task IDs usually correspond to the output filename
-                // (e.g., mod_1.o, lib_core.a, app). We'll use the ID as a default,
-                // but still look for -o to handle more complex shell commands.
-                output_filename = ctx->id;
+                fn_args.push_back(ctx->command);
+                fn_args.push_back(sandbox_dir.string());
                 
+                // Heuristic for output filename detection stays here for task reporting
+                output_filename = ctx->id;
                 size_t o_pos = ctx->command.find("-o ");
                 if (o_pos != std::string::npos) {
                     std::stringstream ss(ctx->command.substr(o_pos + 3));
                     ss >> output_filename;
                 }
-
-                // Run in sandbox
-                std::string cmd = "cd " + sandbox_dir.string() + " && " + ctx->command;
-                int ret = std::system(cmd.c_str());
-                success = (ret == 0);
             } else {
-                success = true; // Non-shell functions are simplified for now
+                // For other functions, maybe parse req->args() if needed
+                // Currently non-shell functions are placeholders
+            }
+
+            if (fn_reg_.exists(ctx->function)) {
+                try {
+                    std::any res = fn_reg_.invoke(ctx->function, fn_args);
+                    if (res.type() == typeid(int)) {
+                        success = (std::any_cast<int>(res) != 0);
+                    } else if (res.type() == typeid(bool)) {
+                        success = std::any_cast<bool>(res);
+                    } else {
+                        success = true; // Assume success if function returned something else
+                    }
+                } catch (const std::exception& e) {
+                    LOG_ERROR("NodeService", "function_invocation_failed", {{"task_id", ctx->id}, {"error", e.what()}});
+                    success = false;
+                }
+            } else {
+                LOG_ERROR("NodeService", "function_not_found", {{"task_id", ctx->id}, {"fn", ctx->function}});
+                success = false;
             }
 
             // 3. UPLOAD RESULT & REPORT
@@ -137,7 +159,9 @@ public:
                 std::string result_hash = "";
                 if (!output_filename.empty()) {
                     fs::path out_path = sandbox_dir / output_filename;
-                    result_hash = cas_client_->upload_blob(out_path);
+                    if (fs::exists(out_path)) {
+                        result_hash = cas_client_->upload_blob(out_path);
+                    }
                 }
                 
                 node_.report_object_created(ctx->id, result_hash);

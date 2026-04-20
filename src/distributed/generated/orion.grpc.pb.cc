@@ -28,6 +28,7 @@ static const char* ClusterHead_method_names[] = {
   "/orion.ClusterHead/ReportObjectCreated",
   "/orion.ClusterHead/GetObjectLocation",
   "/orion.ClusterHead/WhoIsLeader",
+  "/orion.ClusterHead/GetTaskStatus",
   "/orion.ClusterHead/Heartbeat",
 };
 
@@ -43,7 +44,8 @@ ClusterHead::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channe
   , rpcmethod_ReportObjectCreated_(ClusterHead_method_names[2], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_GetObjectLocation_(ClusterHead_method_names[3], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_WhoIsLeader_(ClusterHead_method_names[4], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_Heartbeat_(ClusterHead_method_names[5], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetTaskStatus_(ClusterHead_method_names[5], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_Heartbeat_(ClusterHead_method_names[6], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
 ::grpc::Status ClusterHead::Stub::RegisterNode(::grpc::ClientContext* context, const ::orion::RegisterNodeRequest& request, ::orion::RegisterNodeReply* response) {
@@ -161,6 +163,29 @@ void ClusterHead::Stub::async::WhoIsLeader(::grpc::ClientContext* context, const
   return result;
 }
 
+::grpc::Status ClusterHead::Stub::GetTaskStatus(::grpc::ClientContext* context, const ::orion::TaskStatusRequest& request, ::orion::TaskStatusReply* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::orion::TaskStatusRequest, ::orion::TaskStatusReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_GetTaskStatus_, context, request, response);
+}
+
+void ClusterHead::Stub::async::GetTaskStatus(::grpc::ClientContext* context, const ::orion::TaskStatusRequest* request, ::orion::TaskStatusReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::orion::TaskStatusRequest, ::orion::TaskStatusReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetTaskStatus_, context, request, response, std::move(f));
+}
+
+void ClusterHead::Stub::async::GetTaskStatus(::grpc::ClientContext* context, const ::orion::TaskStatusRequest* request, ::orion::TaskStatusReply* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_GetTaskStatus_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::orion::TaskStatusReply>* ClusterHead::Stub::PrepareAsyncGetTaskStatusRaw(::grpc::ClientContext* context, const ::orion::TaskStatusRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::orion::TaskStatusReply, ::orion::TaskStatusRequest, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_GetTaskStatus_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::orion::TaskStatusReply>* ClusterHead::Stub::AsyncGetTaskStatusRaw(::grpc::ClientContext* context, const ::orion::TaskStatusRequest& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncGetTaskStatusRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
+
 ::grpc::Status ClusterHead::Stub::Heartbeat(::grpc::ClientContext* context, const ::orion::HeartbeatRequest& request, ::orion::HeartbeatReply* response) {
   return ::grpc::internal::BlockingUnaryCall< ::orion::HeartbeatRequest, ::orion::HeartbeatReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_Heartbeat_, context, request, response);
 }
@@ -238,6 +263,16 @@ ClusterHead::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       ClusterHead_method_names[5],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< ClusterHead::Service, ::orion::TaskStatusRequest, ::orion::TaskStatusReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](ClusterHead::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::orion::TaskStatusRequest* req,
+             ::orion::TaskStatusReply* resp) {
+               return service->GetTaskStatus(ctx, req, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      ClusterHead_method_names[6],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< ClusterHead::Service, ::orion::HeartbeatRequest, ::orion::HeartbeatReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
           [](ClusterHead::Service* service,
              ::grpc::ServerContext* ctx,
@@ -279,6 +314,13 @@ ClusterHead::Service::~Service() {
 }
 
 ::grpc::Status ClusterHead::Service::WhoIsLeader(::grpc::ServerContext* context, const ::orion::Empty* request, ::orion::WhoIsLeaderReply* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status ClusterHead::Service::GetTaskStatus(::grpc::ServerContext* context, const ::orion::TaskStatusRequest* request, ::orion::TaskStatusReply* response) {
   (void) context;
   (void) request;
   (void) response;
