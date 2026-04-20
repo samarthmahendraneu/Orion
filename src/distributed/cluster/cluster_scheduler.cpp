@@ -329,17 +329,23 @@ void ClusterScheduler::check_speculative_execution() {
         for (auto& [id, ift] : in_flight_) {
             if (ift.is_speculative) continue;
 
-            auto duration =
-                std::chrono::duration_cast<std::chrono::seconds>(now - ift.start_time);
+            auto duration_ms =
+                std::chrono::duration_cast<std::chrono::milliseconds>(now - ift.start_time).count();
+            
+            int64_t threshold_ms = latency_tracker_.get_straggler_threshold_ms(
+                ift.task.function_name, 
+                std::chrono::duration_cast<std::chrono::milliseconds>(straggler_threshold_).count());
 
-            if (duration > straggler_threshold_) {
+            if (duration_ms > threshold_ms) {
                 auto node_opt = registry_.pick_node();
                 if (node_opt && node_opt->node_id != ift.node_id) {
                     LOG_WARN("ClusterHead", "speculative_launched",
                              {"task_id", id},
+                             {"fn", ift.task.function_name},
                              {"original_node", ift.node_id},
                              {"clone_node", node_opt->node_id},
-                             {"age_sec", std::to_string(duration.count())});
+                             {"age_ms", std::to_string(duration_ms)},
+                             {"threshold_ms", std::to_string(threshold_ms)});
                     observability::counters::speculative_launched().inc();
                     ift.is_speculative = true;
                     clones_to_dispatch.emplace_back(node_opt->node_id, ift.task);
@@ -674,6 +680,12 @@ void ClusterScheduler::apply_log_entry(const orion::OrionLogEntry& entry) {
                       {"total_ms", std::to_string(total_ms)},
                       {"queue_ms", std::to_string(queue_ms)},
                       {"exec_ms", std::to_string(exec_ms)}});
+
+            // Feed the latency tracker for dynamic speculation
+            auto it_if = in_flight_.find(task_id);
+            if (it_if != in_flight_.end()) {
+                latency_tracker_.record_completion(it_if->second.task.function_name, exec_ms);
+            }
         }
     }
 

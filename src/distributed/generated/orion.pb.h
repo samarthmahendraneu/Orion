@@ -162,6 +162,14 @@ class TaskRequest_InputMapEntry_DoNotUse;
 struct TaskRequest_InputMapEntry_DoNotUseDefaultTypeInternal;
 extern TaskRequest_InputMapEntry_DoNotUseDefaultTypeInternal _TaskRequest_InputMapEntry_DoNotUse_default_instance_;
 extern const ::google::protobuf::internal::ClassDataFull TaskRequest_InputMapEntry_DoNotUse_class_data_;
+class TaskStatusReply;
+struct TaskStatusReplyDefaultTypeInternal;
+extern TaskStatusReplyDefaultTypeInternal _TaskStatusReply_default_instance_;
+extern const ::google::protobuf::internal::ClassDataFull TaskStatusReply_class_data_;
+class TaskStatusRequest;
+struct TaskStatusRequestDefaultTypeInternal;
+extern TaskStatusRequestDefaultTypeInternal _TaskStatusRequest_default_instance_;
+extern const ::google::protobuf::internal::ClassDataFull TaskStatusRequest_class_data_;
 class TaskSubmitted;
 struct TaskSubmittedDefaultTypeInternal;
 extern TaskSubmittedDefaultTypeInternal _TaskSubmitted_default_instance_;
@@ -250,7 +258,7 @@ class WhoIsLeaderReply final : public ::google::protobuf::Message
     return *reinterpret_cast<const WhoIsLeaderReply*>(
         &_WhoIsLeaderReply_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 18;
+  static constexpr int kIndexInFileMessages = 20;
   friend void swap(WhoIsLeaderReply& a, WhoIsLeaderReply& b) { a.Swap(&b); }
   inline void Swap(WhoIsLeaderReply* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -462,7 +470,7 @@ class VoteRequest final : public ::google::protobuf::Message
     return *reinterpret_cast<const VoteRequest*>(
         &_VoteRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 19;
+  static constexpr int kIndexInFileMessages = 21;
   friend void swap(VoteRequest& a, VoteRequest& b) { a.Swap(&b); }
   inline void Swap(VoteRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -693,7 +701,7 @@ class VoteReply final : public ::google::protobuf::Message
     return *reinterpret_cast<const VoteReply*>(
         &_VoteReply_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 20;
+  static constexpr int kIndexInFileMessages = 22;
   friend void swap(VoteReply& a, VoteReply& b) { a.Swap(&b); }
   inline void Swap(VoteReply* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -1069,6 +1077,437 @@ class TraceContext final : public ::google::protobuf::Message
 extern const ::google::protobuf::internal::ClassDataFull TraceContext_class_data_;
 // -------------------------------------------------------------------
 
+class TaskStatusRequest final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:orion.TaskStatusRequest) */ {
+ public:
+  inline TaskStatusRequest() : TaskStatusRequest(nullptr) {}
+  ~TaskStatusRequest() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(TaskStatusRequest* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(TaskStatusRequest));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR TaskStatusRequest(::google::protobuf::internal::ConstantInitialized);
+
+  inline TaskStatusRequest(const TaskStatusRequest& from) : TaskStatusRequest(nullptr, from) {}
+  inline TaskStatusRequest(TaskStatusRequest&& from) noexcept
+      : TaskStatusRequest(nullptr, ::std::move(from)) {}
+  inline TaskStatusRequest& operator=(const TaskStatusRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline TaskStatusRequest& operator=(TaskStatusRequest&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const TaskStatusRequest& default_instance() {
+    return *reinterpret_cast<const TaskStatusRequest*>(
+        &_TaskStatusRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 12;
+  friend void swap(TaskStatusRequest& a, TaskStatusRequest& b) { a.Swap(&b); }
+  inline void Swap(TaskStatusRequest* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(TaskStatusRequest* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  TaskStatusRequest* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<TaskStatusRequest>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const TaskStatusRequest& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const TaskStatusRequest& from) { TaskStatusRequest::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
+                        const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(TaskStatusRequest* PROTOBUF_NONNULL other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "orion.TaskStatusRequest"; }
+
+  explicit TaskStatusRequest(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  TaskStatusRequest(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const TaskStatusRequest& from);
+  TaskStatusRequest(
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, TaskStatusRequest&& from) noexcept
+      : TaskStatusRequest(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
+  static void* PROTOBUF_NONNULL PlacementNew_(
+      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static constexpr auto InternalNewImpl_();
+
+ public:
+  static constexpr auto InternalGenerateClassData_();
+
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kTaskIdFieldNumber = 1,
+  };
+  // string task_id = 1;
+  void clear_task_id() ;
+  const ::std::string& task_id() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_task_id(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_task_id();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_task_id();
+  void set_allocated_task_id(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_task_id() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_task_id(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_task_id();
+
+  public:
+  // @@protoc_insertion_point(class_scope:orion.TaskStatusRequest)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<0, 1,
+                                   0, 39,
+                                   2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+        const TaskStatusRequest& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::internal::ArenaStringPtr task_id_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_orion_2eproto;
+};
+
+extern const ::google::protobuf::internal::ClassDataFull TaskStatusRequest_class_data_;
+// -------------------------------------------------------------------
+
+class TaskStatusReply final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:orion.TaskStatusReply) */ {
+ public:
+  inline TaskStatusReply() : TaskStatusReply(nullptr) {}
+  ~TaskStatusReply() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(TaskStatusReply* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(TaskStatusReply));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR TaskStatusReply(::google::protobuf::internal::ConstantInitialized);
+
+  inline TaskStatusReply(const TaskStatusReply& from) : TaskStatusReply(nullptr, from) {}
+  inline TaskStatusReply(TaskStatusReply&& from) noexcept
+      : TaskStatusReply(nullptr, ::std::move(from)) {}
+  inline TaskStatusReply& operator=(const TaskStatusReply& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline TaskStatusReply& operator=(TaskStatusReply&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const TaskStatusReply& default_instance() {
+    return *reinterpret_cast<const TaskStatusReply*>(
+        &_TaskStatusReply_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 13;
+  friend void swap(TaskStatusReply& a, TaskStatusReply& b) { a.Swap(&b); }
+  inline void Swap(TaskStatusReply* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(TaskStatusReply* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  TaskStatusReply* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<TaskStatusReply>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const TaskStatusReply& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const TaskStatusReply& from) { TaskStatusReply::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
+                        const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(TaskStatusReply* PROTOBUF_NONNULL other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "orion.TaskStatusReply"; }
+
+  explicit TaskStatusReply(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  TaskStatusReply(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const TaskStatusReply& from);
+  TaskStatusReply(
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, TaskStatusReply&& from) noexcept
+      : TaskStatusReply(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
+  static void* PROTOBUF_NONNULL PlacementNew_(
+      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static constexpr auto InternalNewImpl_();
+
+ public:
+  static constexpr auto InternalGenerateClassData_();
+
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kOutputHashFieldNumber = 2,
+    kErrorMessageFieldNumber = 4,
+    kFinishedFieldNumber = 1,
+    kFailedFieldNumber = 3,
+  };
+  // string output_hash = 2;
+  void clear_output_hash() ;
+  const ::std::string& output_hash() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_output_hash(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_output_hash();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_output_hash();
+  void set_allocated_output_hash(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_output_hash() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_output_hash(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_output_hash();
+
+  public:
+  // string error_message = 4;
+  void clear_error_message() ;
+  const ::std::string& error_message() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_error_message(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_error_message();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_error_message();
+  void set_allocated_error_message(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_error_message() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_error_message(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_error_message();
+
+  public:
+  // bool finished = 1;
+  void clear_finished() ;
+  bool finished() const;
+  void set_finished(bool value);
+
+  private:
+  bool _internal_finished() const;
+  void _internal_set_finished(bool value);
+
+  public:
+  // bool failed = 3;
+  void clear_failed() ;
+  bool failed() const;
+  void set_failed(bool value);
+
+  private:
+  bool _internal_failed() const;
+  void _internal_set_failed(bool value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:orion.TaskStatusReply)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<2, 4,
+                                   0, 54,
+                                   2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+        const TaskStatusReply& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::internal::ArenaStringPtr output_hash_;
+    ::google::protobuf::internal::ArenaStringPtr error_message_;
+    bool finished_;
+    bool failed_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_orion_2eproto;
+};
+
+extern const ::google::protobuf::internal::ClassDataFull TaskStatusReply_class_data_;
+// -------------------------------------------------------------------
+
 class TaskRequest_InputMapEntry_DoNotUse final
     : public ::google::protobuf::internal::MapEntry<::std::string, ::std::string,
                              ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
@@ -1404,7 +1843,7 @@ class TaskFailed final : public ::google::protobuf::Message
     return *reinterpret_cast<const TaskFailed*>(
         &_TaskFailed_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 27;
+  static constexpr int kIndexInFileMessages = 29;
   friend void swap(TaskFailed& a, TaskFailed& b) { a.Swap(&b); }
   inline void Swap(TaskFailed* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -1616,7 +2055,7 @@ class TaskDispatched final : public ::google::protobuf::Message
     return *reinterpret_cast<const TaskDispatched*>(
         &_TaskDispatched_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 25;
+  static constexpr int kIndexInFileMessages = 27;
   friend void swap(TaskDispatched& a, TaskDispatched& b) { a.Swap(&b); }
   inline void Swap(TaskDispatched* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -1828,7 +2267,7 @@ class TaskCompleted final : public ::google::protobuf::Message
     return *reinterpret_cast<const TaskCompleted*>(
         &_TaskCompleted_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 26;
+  static constexpr int kIndexInFileMessages = 28;
   friend void swap(TaskCompleted& a, TaskCompleted& b) { a.Swap(&b); }
   inline void Swap(TaskCompleted* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -2057,7 +2496,7 @@ class TaskCancelled final : public ::google::protobuf::Message
     return *reinterpret_cast<const TaskCancelled*>(
         &_TaskCancelled_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 28;
+  static constexpr int kIndexInFileMessages = 30;
   friend void swap(TaskCancelled& a, TaskCancelled& b) { a.Swap(&b); }
   inline void Swap(TaskCancelled* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -3078,7 +3517,7 @@ class ObjectData final : public ::google::protobuf::Message
     return *reinterpret_cast<const ObjectData*>(
         &_ObjectData_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 12;
+  static constexpr int kIndexInFileMessages = 14;
   friend void swap(ObjectData& a, ObjectData& b) { a.Swap(&b); }
   inline void Swap(ObjectData* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -3290,7 +3729,7 @@ class NodeRegistered final : public ::google::protobuf::Message
     return *reinterpret_cast<const NodeRegistered*>(
         &_NodeRegistered_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 29;
+  static constexpr int kIndexInFileMessages = 31;
   friend void swap(NodeRegistered& a, NodeRegistered& b) { a.Swap(&b); }
   inline void Swap(NodeRegistered* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -3502,7 +3941,7 @@ class NodeEvicted final : public ::google::protobuf::Message
     return *reinterpret_cast<const NodeEvicted*>(
         &_NodeEvicted_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 30;
+  static constexpr int kIndexInFileMessages = 32;
   friend void swap(NodeEvicted& a, NodeEvicted& b) { a.Swap(&b); }
   inline void Swap(NodeEvicted* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -3697,7 +4136,7 @@ class HeartbeatReply final : public ::google::protobuf::Message
     return *reinterpret_cast<const HeartbeatReply*>(
         &_HeartbeatReply_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 15;
+  static constexpr int kIndexInFileMessages = 17;
   friend void swap(HeartbeatReply& a, HeartbeatReply& b) { a.Swap(&b); }
   inline void Swap(HeartbeatReply* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -3915,7 +4354,7 @@ class Empty final : public ::google::protobuf::internal::ZeroFieldsBase
     return *reinterpret_cast<const Empty*>(
         &_Empty_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 13;
+  static constexpr int kIndexInFileMessages = 15;
   friend void swap(Empty& a, Empty& b) { a.Swap(&b); }
   inline void Swap(Empty* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -4050,7 +4489,7 @@ class CancelRequest final : public ::google::protobuf::Message
     return *reinterpret_cast<const CancelRequest*>(
         &_CancelRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 16;
+  static constexpr int kIndexInFileMessages = 18;
   friend void swap(CancelRequest& a, CancelRequest& b) { a.Swap(&b); }
   inline void Swap(CancelRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -4262,7 +4701,7 @@ class CancelReply final : public ::google::protobuf::Message
     return *reinterpret_cast<const CancelReply*>(
         &_CancelReply_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 17;
+  static constexpr int kIndexInFileMessages = 19;
   friend void swap(CancelReply& a, CancelReply& b) { a.Swap(&b); }
   inline void Swap(CancelReply* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -5107,7 +5546,7 @@ class AppendEntriesReply final : public ::google::protobuf::Message
     return *reinterpret_cast<const AppendEntriesReply*>(
         &_AppendEntriesReply_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 22;
+  static constexpr int kIndexInFileMessages = 24;
   friend void swap(AppendEntriesReply& a, AppendEntriesReply& b) { a.Swap(&b); }
   inline void Swap(AppendEntriesReply* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -5898,7 +6337,7 @@ class HeartbeatRequest final : public ::google::protobuf::Message
     return *reinterpret_cast<const HeartbeatRequest*>(
         &_HeartbeatRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 14;
+  static constexpr int kIndexInFileMessages = 16;
   friend void swap(HeartbeatRequest& a, HeartbeatRequest& b) { a.Swap(&b); }
   inline void Swap(HeartbeatRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -6134,7 +6573,7 @@ class TaskSubmitted final : public ::google::protobuf::Message
     return *reinterpret_cast<const TaskSubmitted*>(
         &_TaskSubmitted_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 24;
+  static constexpr int kIndexInFileMessages = 26;
   friend void swap(TaskSubmitted& a, TaskSubmitted& b) { a.Swap(&b); }
   inline void Swap(TaskSubmitted* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -6356,7 +6795,7 @@ class OrionLogEntry final : public ::google::protobuf::Message
     kNodeEvicted = 9,
     OP_NOT_SET = 0,
   };
-  static constexpr int kIndexInFileMessages = 23;
+  static constexpr int kIndexInFileMessages = 25;
   friend void swap(OrionLogEntry& a, OrionLogEntry& b) { a.Swap(&b); }
   inline void Swap(OrionLogEntry* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -6721,7 +7160,7 @@ class AppendEntriesRequest final : public ::google::protobuf::Message
     return *reinterpret_cast<const AppendEntriesRequest*>(
         &_AppendEntriesRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 21;
+  static constexpr int kIndexInFileMessages = 23;
   friend void swap(AppendEntriesRequest& a, AppendEntriesRequest& b) { a.Swap(&b); }
   inline void Swap(AppendEntriesRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -9042,6 +9481,259 @@ inline void ObjectLocationReply::set_allocated_address(::std::string* PROTOBUF_N
     _impl_.address_.Set("", GetArena());
   }
   // @@protoc_insertion_point(field_set_allocated:orion.ObjectLocationReply.address)
+}
+
+// -------------------------------------------------------------------
+
+// TaskStatusRequest
+
+// string task_id = 1;
+inline void TaskStatusRequest::clear_task_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.task_id_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000001U);
+}
+inline const ::std::string& TaskStatusRequest::task_id() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:orion.TaskStatusRequest.task_id)
+  return _internal_task_id();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void TaskStatusRequest::set_task_id(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  _impl_.task_id_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:orion.TaskStatusRequest.task_id)
+}
+inline ::std::string* PROTOBUF_NONNULL TaskStatusRequest::mutable_task_id()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  ::std::string* _s = _internal_mutable_task_id();
+  // @@protoc_insertion_point(field_mutable:orion.TaskStatusRequest.task_id)
+  return _s;
+}
+inline const ::std::string& TaskStatusRequest::_internal_task_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.task_id_.Get();
+}
+inline void TaskStatusRequest::_internal_set_task_id(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.task_id_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL TaskStatusRequest::_internal_mutable_task_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.task_id_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE TaskStatusRequest::release_task_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:orion.TaskStatusRequest.task_id)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000001U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  auto* released = _impl_.task_id_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.task_id_.Set("", GetArena());
+  }
+  return released;
+}
+inline void TaskStatusRequest::set_allocated_task_id(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  }
+  _impl_.task_id_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.task_id_.IsDefault()) {
+    _impl_.task_id_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:orion.TaskStatusRequest.task_id)
+}
+
+// -------------------------------------------------------------------
+
+// TaskStatusReply
+
+// bool finished = 1;
+inline void TaskStatusReply::clear_finished() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.finished_ = false;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000004U);
+}
+inline bool TaskStatusReply::finished() const {
+  // @@protoc_insertion_point(field_get:orion.TaskStatusReply.finished)
+  return _internal_finished();
+}
+inline void TaskStatusReply::set_finished(bool value) {
+  _internal_set_finished(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  // @@protoc_insertion_point(field_set:orion.TaskStatusReply.finished)
+}
+inline bool TaskStatusReply::_internal_finished() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.finished_;
+}
+inline void TaskStatusReply::_internal_set_finished(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.finished_ = value;
+}
+
+// string output_hash = 2;
+inline void TaskStatusReply::clear_output_hash() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.output_hash_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000001U);
+}
+inline const ::std::string& TaskStatusReply::output_hash() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:orion.TaskStatusReply.output_hash)
+  return _internal_output_hash();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void TaskStatusReply::set_output_hash(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  _impl_.output_hash_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:orion.TaskStatusReply.output_hash)
+}
+inline ::std::string* PROTOBUF_NONNULL TaskStatusReply::mutable_output_hash()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  ::std::string* _s = _internal_mutable_output_hash();
+  // @@protoc_insertion_point(field_mutable:orion.TaskStatusReply.output_hash)
+  return _s;
+}
+inline const ::std::string& TaskStatusReply::_internal_output_hash() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.output_hash_.Get();
+}
+inline void TaskStatusReply::_internal_set_output_hash(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.output_hash_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL TaskStatusReply::_internal_mutable_output_hash() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.output_hash_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE TaskStatusReply::release_output_hash() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:orion.TaskStatusReply.output_hash)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000001U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  auto* released = _impl_.output_hash_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.output_hash_.Set("", GetArena());
+  }
+  return released;
+}
+inline void TaskStatusReply::set_allocated_output_hash(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  }
+  _impl_.output_hash_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.output_hash_.IsDefault()) {
+    _impl_.output_hash_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:orion.TaskStatusReply.output_hash)
+}
+
+// bool failed = 3;
+inline void TaskStatusReply::clear_failed() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.failed_ = false;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000008U);
+}
+inline bool TaskStatusReply::failed() const {
+  // @@protoc_insertion_point(field_get:orion.TaskStatusReply.failed)
+  return _internal_failed();
+}
+inline void TaskStatusReply::set_failed(bool value) {
+  _internal_set_failed(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  // @@protoc_insertion_point(field_set:orion.TaskStatusReply.failed)
+}
+inline bool TaskStatusReply::_internal_failed() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.failed_;
+}
+inline void TaskStatusReply::_internal_set_failed(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.failed_ = value;
+}
+
+// string error_message = 4;
+inline void TaskStatusReply::clear_error_message() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.error_message_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline const ::std::string& TaskStatusReply::error_message() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:orion.TaskStatusReply.error_message)
+  return _internal_error_message();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void TaskStatusReply::set_error_message(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.error_message_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:orion.TaskStatusReply.error_message)
+}
+inline ::std::string* PROTOBUF_NONNULL TaskStatusReply::mutable_error_message()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::std::string* _s = _internal_mutable_error_message();
+  // @@protoc_insertion_point(field_mutable:orion.TaskStatusReply.error_message)
+  return _s;
+}
+inline const ::std::string& TaskStatusReply::_internal_error_message() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.error_message_.Get();
+}
+inline void TaskStatusReply::_internal_set_error_message(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.error_message_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL TaskStatusReply::_internal_mutable_error_message() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.error_message_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE TaskStatusReply::release_error_message() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:orion.TaskStatusReply.error_message)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000002U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  auto* released = _impl_.error_message_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.error_message_.Set("", GetArena());
+  }
+  return released;
+}
+inline void TaskStatusReply::set_allocated_error_message(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  }
+  _impl_.error_message_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.error_message_.IsDefault()) {
+    _impl_.error_message_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:orion.TaskStatusReply.error_message)
 }
 
 // -------------------------------------------------------------------

@@ -35,12 +35,18 @@ void RaftConsensus::start() {
             run_heartbeat_loop_();
         }
     });
+
+    batch_worker_ = std::make_unique<std::jthread>([this](std::stop_token st) {
+        run_batch_worker_(st);
+    });
 }
 
 void RaftConsensus::stop() {
     running_ = false;
     if (election_timer_thread_) election_timer_thread_->request_stop();
     if (heartbeat_thread_) heartbeat_thread_->request_stop();
+    if (batch_worker_) batch_worker_->request_stop();
+    cv_.notify_all(); // Wake up batch worker if waiting
 }
 
 void RaftConsensus::run_election_timeout_() {
@@ -204,15 +210,52 @@ std::chrono::milliseconds RaftConsensus::next_election_timeout_() {
     return std::chrono::milliseconds(dist(rng_));
 }
 
-bool RaftConsensus::replicate(const OrionLogEntry& entry) {
-    std::unique_lock<std::mutex> lock(mu_);
-    if (role_ != RaftRole::LEADER) return false;
+std::future<bool> RaftConsensus::replicate(const OrionLogEntry& entry) {
+    auto batch_item = std::make_unique<LogEntryBatch>();
+    batch_item->entry.CopyFrom(entry);
+    auto fut = batch_item->promise.get_future();
 
-    // Fast path: single-node cluster — no peers to replicate to.
-    if (stubs_.empty()) {
-        scheduler_.apply_log_entry(entry);
-        return true;
+    {
+        std::lock_guard<std::mutex> lock(mu_);
+        if (role_ != RaftRole::LEADER) {
+            batch_item->promise.set_value(false);
+            return fut;
+        }
+
+        // Fast path: single-node cluster
+        if (stubs_.empty()) {
+            scheduler_.apply_log_entry(entry);
+            batch_item->promise.set_value(true);
+            return fut;
+        }
+
+        pending_batch_.push_back(std::move(batch_item));
+        if (pending_batch_.size() >= kMaxBatchSize) {
+            cv_.notify_all();
+        }
     }
+
+    return fut;
+}
+
+void RaftConsensus::run_batch_worker_(std::stop_token st) {
+    while (!st.stop_requested()) {
+        std::unique_lock<std::mutex> lock(mu_);
+        cv_.wait_for(lock, kMaxBatchWait, [this, &st] {
+            return !pending_batch_.empty() || st.stop_requested();
+        });
+
+        if (st.stop_requested()) break;
+        if (pending_batch_.empty() || role_ != RaftRole::LEADER) continue;
+
+        flush_batch_();
+    }
+}
+
+void RaftConsensus::flush_batch_() {
+    // Expects mu_ to be held
+    auto batch = std::move(pending_batch_);
+    pending_batch_.clear();
 
     int64_t term = current_term_;
     std::string node_id = config_.node_id;
@@ -220,14 +263,12 @@ bool RaftConsensus::replicate(const OrionLogEntry& entry) {
     AppendEntriesRequest req;
     req.set_term(term);
     req.set_leader_id(node_id);
-    req.add_entries()->CopyFrom(entry);
+    for (const auto& item : batch) {
+        req.add_entries()->CopyFrom(item->entry);
+    }
 
-    lock.unlock(); // DROP LOCK — RPC calls go out in parallel below
+    mu_.unlock(); // DROP LOCK for network
 
-    // Fan-out: send AppendEntries to ALL peers simultaneously.
-    // Previously this was a sequential loop — with 2 peers that's 2 × 500ms
-    // worst-case, blocking every SubmitTask call.  With parallel fanout it's
-    // one round-trip regardless of peer count.
     struct PeerResult { bool success; int64_t term; };
     std::vector<std::future<PeerResult>> peer_futures;
     peer_futures.reserve(stubs_.size());
@@ -240,10 +281,6 @@ bool RaftConsensus::replicate(const OrionLogEntry& entry) {
                 ctx.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(500));
                 grpc::Status status = stub->AppendEntries(&ctx, req, &reply);
                 if (!status.ok()) {
-                    LOG_WARN("Raft", "replicate_rpc_failed",
-                             {{"peer", id},
-                              {"code",  std::to_string(status.error_code())},
-                              {"msg",   status.error_message()}});
                     return {false, 0};
                 }
                 return {reply.success(), reply.term()};
@@ -251,28 +288,32 @@ bool RaftConsensus::replicate(const OrionLogEntry& entry) {
         );
     }
 
-    int success_count = 1; // count self
+    int success_count = 1; 
     int64_t higher_term = 0;
     for (auto& f : peer_futures) {
         auto [ok, peer_term] = f.get();
-        if (ok)                    success_count++;
-        if (peer_term > term)      higher_term = std::max(higher_term, peer_term);
+        if (ok) success_count++;
+        if (peer_term > term) higher_term = std::max(higher_term, peer_term);
     }
 
-    lock.lock(); // RE-ACQUIRE
+    mu_.lock(); // RE-ACQUIRE
 
-    if (higher_term > 0) {
+    bool committed = false;
+    if (higher_term > term) {
         become_follower_(higher_term, "");
-        return false;
+    } else {
+        int needed = static_cast<int>((stubs_.size() + 1) / 2) + 1;
+        if (role_ == RaftRole::LEADER && current_term_ == term && success_count >= needed) {
+            committed = true;
+            for (const auto& item : batch) {
+                scheduler_.apply_log_entry(item->entry);
+            }
+        }
     }
 
-    int needed = static_cast<int>((stubs_.size() + 1) / 2) + 1;
-    if (role_ == RaftRole::LEADER && current_term_ == term && success_count >= needed) {
-        scheduler_.apply_log_entry(entry);
-        return true;
+    for (auto& item : batch) {
+        item->promise.set_value(committed);
     }
-
-    return false;
 }
 
 } // namespace orion::distributed

@@ -31,6 +31,8 @@
 #include "distributed/observability/otlp_exporter.h"
 #include "distributed/observability/metrics.h"
 
+namespace fs = std::filesystem;
+ 
 static std::atomic<bool> g_running{true};
 static std::unique_ptr<grpc::Server> g_grpc_server;
 
@@ -75,10 +77,18 @@ int main(int argc, char* argv[]) {
     orion::distributed::FunctionRegistry fn_reg;
     orion::distributed::register_builtin_functions(fn_reg);
 
-    // V2: Initialize CAS Client and Worker Pool
+    // V2: Initialize CAS Client and Worker Pool with isolated sandboxes
     auto cas_channel = grpc::CreateChannel(cluster_address, grpc::InsecureChannelCredentials());
     auto cas_client = std::make_shared<orion::distributed::CasClient>(cas_channel);
-    auto worker_pool = std::make_shared<orion::distributed::WorkerPool>(1); // same as num_workers
+    
+    // Sandbox root: allow override via environment for local shared-directory testing
+    std::string sandbox_base = "storage/sandboxes/";
+    if (const char* env_sandbox = std::getenv("ORION_SANDBOX_DIR")) {
+        sandbox_base = env_sandbox;
+    }
+    
+    fs::path sandbox_root = fs::path(sandbox_base) / node_id;
+    auto worker_pool = std::make_shared<orion::distributed::WorkerPool>(1, sandbox_root.string()); 
 
     orion::distributed::NodeServiceImpl node_service(node, fn_reg, cas_client, worker_pool);
 

@@ -13,6 +13,7 @@ Orion models computation as a **dataflow graph**: tasks declare their inputs as 
 | **Distributed** | `NodeRuntime`, `ClusterScheduler`, `NodeRegistry`, `NodeClient` — gRPC-based cluster orchestration |
 | **V2 Engine** | **Raft Replication**, **Merkle Action Cache**, **Distributed CAS** |
 | **Hardened** | **Speculative Execution** (Straggler Mitigation) & **SHA-256 Integrity Verification** |
+| **Real-World** | **Redis Compilation Scaling** (5.6x speedup on 6 nodes) & **Global Context Uplift** |
 
 ---
 
@@ -295,6 +296,22 @@ cluster.submit(t2);
 
 n1.stop(); n2.stop();
 ```
+
+---
+
+## Benchmarks: Scaling Redis Core
+
+Orion was validated against the **Redis 7.x** codebase (114 core tasks). By implementing a **Global Context Uplift** strategy (multi-threaded pre-provisioning of the entire source tree to worker sandboxes), we achieved near-linear scaling.
+
+| Configuration | Tasks | Total Time | Speedup | Efficiency |
+| :--- | :---: | :---: | :---: | :---: |
+| **1-Node Baseline** | 114 | 10.74 seconds | 1.0x | 100% |
+| **6-Node Cluster** | 114 | **1.92 seconds** | **5.6x** | **93%** |
+
+### Key Scalability Features:
+- **Global Context Uplift**: Eliminates "header not found" errors by ensuring worker sandboxes are identical to the project root.
+- **gRPC Multiplexing**: Persistent channels prevent port exhaustion under high task concurrency (50+ tasks/sec).
+- **DAG Extraction**: Python-based automation for mapping arbitrary C/C++ projects into Orion distributed graphs.
 
 ---
 

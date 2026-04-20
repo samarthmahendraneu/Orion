@@ -73,6 +73,13 @@ class ClusterHead final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::orion::WhoIsLeaderReply>> PrepareAsyncWhoIsLeader(::grpc::ClientContext* context, const ::orion::Empty& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::orion::WhoIsLeaderReply>>(PrepareAsyncWhoIsLeaderRaw(context, request, cq));
     }
+    virtual ::grpc::Status GetTaskStatus(::grpc::ClientContext* context, const ::orion::TaskStatusRequest& request, ::orion::TaskStatusReply* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::orion::TaskStatusReply>> AsyncGetTaskStatus(::grpc::ClientContext* context, const ::orion::TaskStatusRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::orion::TaskStatusReply>>(AsyncGetTaskStatusRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::orion::TaskStatusReply>> PrepareAsyncGetTaskStatus(::grpc::ClientContext* context, const ::orion::TaskStatusRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::orion::TaskStatusReply>>(PrepareAsyncGetTaskStatusRaw(context, request, cq));
+    }
     virtual ::grpc::Status Heartbeat(::grpc::ClientContext* context, const ::orion::HeartbeatRequest& request, ::orion::HeartbeatReply* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::orion::HeartbeatReply>> AsyncHeartbeat(::grpc::ClientContext* context, const ::orion::HeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::orion::HeartbeatReply>>(AsyncHeartbeatRaw(context, request, cq));
@@ -95,6 +102,8 @@ class ClusterHead final {
       //   Clients call WhoIsLeader to discover the current authoritative head.
       virtual void WhoIsLeader(::grpc::ClientContext* context, const ::orion::Empty* request, ::orion::WhoIsLeaderReply* response, std::function<void(::grpc::Status)>) = 0;
       virtual void WhoIsLeader(::grpc::ClientContext* context, const ::orion::Empty* request, ::orion::WhoIsLeaderReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      virtual void GetTaskStatus(::grpc::ClientContext* context, const ::orion::TaskStatusRequest* request, ::orion::TaskStatusReply* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void GetTaskStatus(::grpc::ClientContext* context, const ::orion::TaskStatusRequest* request, ::orion::TaskStatusReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       virtual void Heartbeat(::grpc::ClientContext* context, const ::orion::HeartbeatRequest* request, ::orion::HeartbeatReply* response, std::function<void(::grpc::Status)>) = 0;
       virtual void Heartbeat(::grpc::ClientContext* context, const ::orion::HeartbeatRequest* request, ::orion::HeartbeatReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
     };
@@ -112,6 +121,8 @@ class ClusterHead final {
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::orion::ObjectLocationReply>* PrepareAsyncGetObjectLocationRaw(::grpc::ClientContext* context, const ::orion::ObjectLocationRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::orion::WhoIsLeaderReply>* AsyncWhoIsLeaderRaw(::grpc::ClientContext* context, const ::orion::Empty& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::orion::WhoIsLeaderReply>* PrepareAsyncWhoIsLeaderRaw(::grpc::ClientContext* context, const ::orion::Empty& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::orion::TaskStatusReply>* AsyncGetTaskStatusRaw(::grpc::ClientContext* context, const ::orion::TaskStatusRequest& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::orion::TaskStatusReply>* PrepareAsyncGetTaskStatusRaw(::grpc::ClientContext* context, const ::orion::TaskStatusRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::orion::HeartbeatReply>* AsyncHeartbeatRaw(::grpc::ClientContext* context, const ::orion::HeartbeatRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::orion::HeartbeatReply>* PrepareAsyncHeartbeatRaw(::grpc::ClientContext* context, const ::orion::HeartbeatRequest& request, ::grpc::CompletionQueue* cq) = 0;
   };
@@ -153,6 +164,13 @@ class ClusterHead final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::orion::WhoIsLeaderReply>> PrepareAsyncWhoIsLeader(::grpc::ClientContext* context, const ::orion::Empty& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::orion::WhoIsLeaderReply>>(PrepareAsyncWhoIsLeaderRaw(context, request, cq));
     }
+    ::grpc::Status GetTaskStatus(::grpc::ClientContext* context, const ::orion::TaskStatusRequest& request, ::orion::TaskStatusReply* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::orion::TaskStatusReply>> AsyncGetTaskStatus(::grpc::ClientContext* context, const ::orion::TaskStatusRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::orion::TaskStatusReply>>(AsyncGetTaskStatusRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::orion::TaskStatusReply>> PrepareAsyncGetTaskStatus(::grpc::ClientContext* context, const ::orion::TaskStatusRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::orion::TaskStatusReply>>(PrepareAsyncGetTaskStatusRaw(context, request, cq));
+    }
     ::grpc::Status Heartbeat(::grpc::ClientContext* context, const ::orion::HeartbeatRequest& request, ::orion::HeartbeatReply* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::orion::HeartbeatReply>> AsyncHeartbeat(::grpc::ClientContext* context, const ::orion::HeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::orion::HeartbeatReply>>(AsyncHeartbeatRaw(context, request, cq));
@@ -173,6 +191,8 @@ class ClusterHead final {
       void GetObjectLocation(::grpc::ClientContext* context, const ::orion::ObjectLocationRequest* request, ::orion::ObjectLocationReply* response, ::grpc::ClientUnaryReactor* reactor) override;
       void WhoIsLeader(::grpc::ClientContext* context, const ::orion::Empty* request, ::orion::WhoIsLeaderReply* response, std::function<void(::grpc::Status)>) override;
       void WhoIsLeader(::grpc::ClientContext* context, const ::orion::Empty* request, ::orion::WhoIsLeaderReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      void GetTaskStatus(::grpc::ClientContext* context, const ::orion::TaskStatusRequest* request, ::orion::TaskStatusReply* response, std::function<void(::grpc::Status)>) override;
+      void GetTaskStatus(::grpc::ClientContext* context, const ::orion::TaskStatusRequest* request, ::orion::TaskStatusReply* response, ::grpc::ClientUnaryReactor* reactor) override;
       void Heartbeat(::grpc::ClientContext* context, const ::orion::HeartbeatRequest* request, ::orion::HeartbeatReply* response, std::function<void(::grpc::Status)>) override;
       void Heartbeat(::grpc::ClientContext* context, const ::orion::HeartbeatRequest* request, ::orion::HeartbeatReply* response, ::grpc::ClientUnaryReactor* reactor) override;
      private:
@@ -196,6 +216,8 @@ class ClusterHead final {
     ::grpc::ClientAsyncResponseReader< ::orion::ObjectLocationReply>* PrepareAsyncGetObjectLocationRaw(::grpc::ClientContext* context, const ::orion::ObjectLocationRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::orion::WhoIsLeaderReply>* AsyncWhoIsLeaderRaw(::grpc::ClientContext* context, const ::orion::Empty& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::orion::WhoIsLeaderReply>* PrepareAsyncWhoIsLeaderRaw(::grpc::ClientContext* context, const ::orion::Empty& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::orion::TaskStatusReply>* AsyncGetTaskStatusRaw(::grpc::ClientContext* context, const ::orion::TaskStatusRequest& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::orion::TaskStatusReply>* PrepareAsyncGetTaskStatusRaw(::grpc::ClientContext* context, const ::orion::TaskStatusRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::orion::HeartbeatReply>* AsyncHeartbeatRaw(::grpc::ClientContext* context, const ::orion::HeartbeatRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::orion::HeartbeatReply>* PrepareAsyncHeartbeatRaw(::grpc::ClientContext* context, const ::orion::HeartbeatRequest& request, ::grpc::CompletionQueue* cq) override;
     const ::grpc::internal::RpcMethod rpcmethod_RegisterNode_;
@@ -203,6 +225,7 @@ class ClusterHead final {
     const ::grpc::internal::RpcMethod rpcmethod_ReportObjectCreated_;
     const ::grpc::internal::RpcMethod rpcmethod_GetObjectLocation_;
     const ::grpc::internal::RpcMethod rpcmethod_WhoIsLeader_;
+    const ::grpc::internal::RpcMethod rpcmethod_GetTaskStatus_;
     const ::grpc::internal::RpcMethod rpcmethod_Heartbeat_;
   };
   static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
@@ -218,6 +241,7 @@ class ClusterHead final {
     // Raft phase-1:
     //   Clients call WhoIsLeader to discover the current authoritative head.
     virtual ::grpc::Status WhoIsLeader(::grpc::ServerContext* context, const ::orion::Empty* request, ::orion::WhoIsLeaderReply* response);
+    virtual ::grpc::Status GetTaskStatus(::grpc::ServerContext* context, const ::orion::TaskStatusRequest* request, ::orion::TaskStatusReply* response);
     virtual ::grpc::Status Heartbeat(::grpc::ServerContext* context, const ::orion::HeartbeatRequest* request, ::orion::HeartbeatReply* response);
   };
   template <class BaseClass>
@@ -321,12 +345,32 @@ class ClusterHead final {
     }
   };
   template <class BaseClass>
+  class WithAsyncMethod_GetTaskStatus : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_GetTaskStatus() {
+      ::grpc::Service::MarkMethodAsync(5);
+    }
+    ~WithAsyncMethod_GetTaskStatus() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetTaskStatus(::grpc::ServerContext* /*context*/, const ::orion::TaskStatusRequest* /*request*/, ::orion::TaskStatusReply* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestGetTaskStatus(::grpc::ServerContext* context, ::orion::TaskStatusRequest* request, ::grpc::ServerAsyncResponseWriter< ::orion::TaskStatusReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
   class WithAsyncMethod_Heartbeat : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithAsyncMethod_Heartbeat() {
-      ::grpc::Service::MarkMethodAsync(5);
+      ::grpc::Service::MarkMethodAsync(6);
     }
     ~WithAsyncMethod_Heartbeat() override {
       BaseClassMustBeDerivedFromService(this);
@@ -337,10 +381,10 @@ class ClusterHead final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestHeartbeat(::grpc::ServerContext* context, ::orion::HeartbeatRequest* request, ::grpc::ServerAsyncResponseWriter< ::orion::HeartbeatReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(6, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
-  typedef WithAsyncMethod_RegisterNode<WithAsyncMethod_SubmitTask<WithAsyncMethod_ReportObjectCreated<WithAsyncMethod_GetObjectLocation<WithAsyncMethod_WhoIsLeader<WithAsyncMethod_Heartbeat<Service > > > > > > AsyncService;
+  typedef WithAsyncMethod_RegisterNode<WithAsyncMethod_SubmitTask<WithAsyncMethod_ReportObjectCreated<WithAsyncMethod_GetObjectLocation<WithAsyncMethod_WhoIsLeader<WithAsyncMethod_GetTaskStatus<WithAsyncMethod_Heartbeat<Service > > > > > > > AsyncService;
   template <class BaseClass>
   class WithCallbackMethod_RegisterNode : public BaseClass {
    private:
@@ -477,18 +521,45 @@ class ClusterHead final {
       ::grpc::CallbackServerContext* /*context*/, const ::orion::Empty* /*request*/, ::orion::WhoIsLeaderReply* /*response*/)  { return nullptr; }
   };
   template <class BaseClass>
+  class WithCallbackMethod_GetTaskStatus : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithCallbackMethod_GetTaskStatus() {
+      ::grpc::Service::MarkMethodCallback(5,
+          new ::grpc::internal::CallbackUnaryHandler< ::orion::TaskStatusRequest, ::orion::TaskStatusReply>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::orion::TaskStatusRequest* request, ::orion::TaskStatusReply* response) { return this->GetTaskStatus(context, request, response); }));}
+    void SetMessageAllocatorFor_GetTaskStatus(
+        ::grpc::MessageAllocator< ::orion::TaskStatusRequest, ::orion::TaskStatusReply>* allocator) {
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(5);
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::orion::TaskStatusRequest, ::orion::TaskStatusReply>*>(handler)
+              ->SetMessageAllocator(allocator);
+    }
+    ~WithCallbackMethod_GetTaskStatus() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetTaskStatus(::grpc::ServerContext* /*context*/, const ::orion::TaskStatusRequest* /*request*/, ::orion::TaskStatusReply* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* GetTaskStatus(
+      ::grpc::CallbackServerContext* /*context*/, const ::orion::TaskStatusRequest* /*request*/, ::orion::TaskStatusReply* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
   class WithCallbackMethod_Heartbeat : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithCallbackMethod_Heartbeat() {
-      ::grpc::Service::MarkMethodCallback(5,
+      ::grpc::Service::MarkMethodCallback(6,
           new ::grpc::internal::CallbackUnaryHandler< ::orion::HeartbeatRequest, ::orion::HeartbeatReply>(
             [this](
                    ::grpc::CallbackServerContext* context, const ::orion::HeartbeatRequest* request, ::orion::HeartbeatReply* response) { return this->Heartbeat(context, request, response); }));}
     void SetMessageAllocatorFor_Heartbeat(
         ::grpc::MessageAllocator< ::orion::HeartbeatRequest, ::orion::HeartbeatReply>* allocator) {
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(5);
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(6);
       static_cast<::grpc::internal::CallbackUnaryHandler< ::orion::HeartbeatRequest, ::orion::HeartbeatReply>*>(handler)
               ->SetMessageAllocator(allocator);
     }
@@ -503,7 +574,7 @@ class ClusterHead final {
     virtual ::grpc::ServerUnaryReactor* Heartbeat(
       ::grpc::CallbackServerContext* /*context*/, const ::orion::HeartbeatRequest* /*request*/, ::orion::HeartbeatReply* /*response*/)  { return nullptr; }
   };
-  typedef WithCallbackMethod_RegisterNode<WithCallbackMethod_SubmitTask<WithCallbackMethod_ReportObjectCreated<WithCallbackMethod_GetObjectLocation<WithCallbackMethod_WhoIsLeader<WithCallbackMethod_Heartbeat<Service > > > > > > CallbackService;
+  typedef WithCallbackMethod_RegisterNode<WithCallbackMethod_SubmitTask<WithCallbackMethod_ReportObjectCreated<WithCallbackMethod_GetObjectLocation<WithCallbackMethod_WhoIsLeader<WithCallbackMethod_GetTaskStatus<WithCallbackMethod_Heartbeat<Service > > > > > > > CallbackService;
   typedef CallbackService ExperimentalCallbackService;
   template <class BaseClass>
   class WithGenericMethod_RegisterNode : public BaseClass {
@@ -591,12 +662,29 @@ class ClusterHead final {
     }
   };
   template <class BaseClass>
+  class WithGenericMethod_GetTaskStatus : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_GetTaskStatus() {
+      ::grpc::Service::MarkMethodGeneric(5);
+    }
+    ~WithGenericMethod_GetTaskStatus() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetTaskStatus(::grpc::ServerContext* /*context*/, const ::orion::TaskStatusRequest* /*request*/, ::orion::TaskStatusReply* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
   class WithGenericMethod_Heartbeat : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithGenericMethod_Heartbeat() {
-      ::grpc::Service::MarkMethodGeneric(5);
+      ::grpc::Service::MarkMethodGeneric(6);
     }
     ~WithGenericMethod_Heartbeat() override {
       BaseClassMustBeDerivedFromService(this);
@@ -708,12 +796,32 @@ class ClusterHead final {
     }
   };
   template <class BaseClass>
+  class WithRawMethod_GetTaskStatus : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_GetTaskStatus() {
+      ::grpc::Service::MarkMethodRaw(5);
+    }
+    ~WithRawMethod_GetTaskStatus() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetTaskStatus(::grpc::ServerContext* /*context*/, const ::orion::TaskStatusRequest* /*request*/, ::orion::TaskStatusReply* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestGetTaskStatus(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
   class WithRawMethod_Heartbeat : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithRawMethod_Heartbeat() {
-      ::grpc::Service::MarkMethodRaw(5);
+      ::grpc::Service::MarkMethodRaw(6);
     }
     ~WithRawMethod_Heartbeat() override {
       BaseClassMustBeDerivedFromService(this);
@@ -724,7 +832,7 @@ class ClusterHead final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestHeartbeat(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(6, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -838,12 +946,34 @@ class ClusterHead final {
       ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
   };
   template <class BaseClass>
+  class WithRawCallbackMethod_GetTaskStatus : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawCallbackMethod_GetTaskStatus() {
+      ::grpc::Service::MarkMethodRawCallback(5,
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+                   ::grpc::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->GetTaskStatus(context, request, response); }));
+    }
+    ~WithRawCallbackMethod_GetTaskStatus() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetTaskStatus(::grpc::ServerContext* /*context*/, const ::orion::TaskStatusRequest* /*request*/, ::orion::TaskStatusReply* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual ::grpc::ServerUnaryReactor* GetTaskStatus(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)  { return nullptr; }
+  };
+  template <class BaseClass>
   class WithRawCallbackMethod_Heartbeat : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithRawCallbackMethod_Heartbeat() {
-      ::grpc::Service::MarkMethodRawCallback(5,
+      ::grpc::Service::MarkMethodRawCallback(6,
           new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
                    ::grpc::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->Heartbeat(context, request, response); }));
@@ -995,12 +1125,39 @@ class ClusterHead final {
     virtual ::grpc::Status StreamedWhoIsLeader(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::orion::Empty,::orion::WhoIsLeaderReply>* server_unary_streamer) = 0;
   };
   template <class BaseClass>
+  class WithStreamedUnaryMethod_GetTaskStatus : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithStreamedUnaryMethod_GetTaskStatus() {
+      ::grpc::Service::MarkMethodStreamed(5,
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::orion::TaskStatusRequest, ::orion::TaskStatusReply>(
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
+                     ::orion::TaskStatusRequest, ::orion::TaskStatusReply>* streamer) {
+                       return this->StreamedGetTaskStatus(context,
+                         streamer);
+                  }));
+    }
+    ~WithStreamedUnaryMethod_GetTaskStatus() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status GetTaskStatus(::grpc::ServerContext* /*context*/, const ::orion::TaskStatusRequest* /*request*/, ::orion::TaskStatusReply* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedGetTaskStatus(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::orion::TaskStatusRequest,::orion::TaskStatusReply>* server_unary_streamer) = 0;
+  };
+  template <class BaseClass>
   class WithStreamedUnaryMethod_Heartbeat : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithStreamedUnaryMethod_Heartbeat() {
-      ::grpc::Service::MarkMethodStreamed(5,
+      ::grpc::Service::MarkMethodStreamed(6,
         new ::grpc::internal::StreamedUnaryHandler<
           ::orion::HeartbeatRequest, ::orion::HeartbeatReply>(
             [this](::grpc::ServerContext* context,
@@ -1021,9 +1178,9 @@ class ClusterHead final {
     // replace default version of method with streamed unary
     virtual ::grpc::Status StreamedHeartbeat(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::orion::HeartbeatRequest,::orion::HeartbeatReply>* server_unary_streamer) = 0;
   };
-  typedef WithStreamedUnaryMethod_RegisterNode<WithStreamedUnaryMethod_SubmitTask<WithStreamedUnaryMethod_ReportObjectCreated<WithStreamedUnaryMethod_GetObjectLocation<WithStreamedUnaryMethod_WhoIsLeader<WithStreamedUnaryMethod_Heartbeat<Service > > > > > > StreamedUnaryService;
+  typedef WithStreamedUnaryMethod_RegisterNode<WithStreamedUnaryMethod_SubmitTask<WithStreamedUnaryMethod_ReportObjectCreated<WithStreamedUnaryMethod_GetObjectLocation<WithStreamedUnaryMethod_WhoIsLeader<WithStreamedUnaryMethod_GetTaskStatus<WithStreamedUnaryMethod_Heartbeat<Service > > > > > > > StreamedUnaryService;
   typedef Service SplitStreamedService;
-  typedef WithStreamedUnaryMethod_RegisterNode<WithStreamedUnaryMethod_SubmitTask<WithStreamedUnaryMethod_ReportObjectCreated<WithStreamedUnaryMethod_GetObjectLocation<WithStreamedUnaryMethod_WhoIsLeader<WithStreamedUnaryMethod_Heartbeat<Service > > > > > > StreamedService;
+  typedef WithStreamedUnaryMethod_RegisterNode<WithStreamedUnaryMethod_SubmitTask<WithStreamedUnaryMethod_ReportObjectCreated<WithStreamedUnaryMethod_GetObjectLocation<WithStreamedUnaryMethod_WhoIsLeader<WithStreamedUnaryMethod_GetTaskStatus<WithStreamedUnaryMethod_Heartbeat<Service > > > > > > > StreamedService;
 };
 
 // Distributed CAS service for artifacts and logs.

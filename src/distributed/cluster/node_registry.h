@@ -77,8 +77,11 @@ namespace orion::distributed {
         std::chrono::seconds node_ttl() const { return node_ttl_; }
 
     private:
+        void update_alive_indices_internal_();
+
         mutable std::mutex mutex_;
         std::unordered_map<std::string, NodeInfo> nodes_;
+        std::vector<std::string> alive_indices_; // O(1) selection index
         size_t rr_index_ = 0;            // round robin pointer
 
         EvictionCallback eviction_cb_;
